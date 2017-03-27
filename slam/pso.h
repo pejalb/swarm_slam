@@ -10,9 +10,7 @@ O ponteiro para a funcao de restricao pode, se fornecido, deve retornar valores 
 
 O ponteiro para funcao fConversao, deve receber um vetor de doubles e retornar um objeto do tipo T a ser avaliado. se T for um tipo padrao, essa funcao não precisa ser fornecida
 Os vetores limiteInferior e limiteSuperior.*/
-#ifndef NULL
-#define NULL 0
-#endif
+
 /* reflexo, a particula e lancada de volta ao espaco de buscas com a dimensao que violou a restricao refletida,
 bloqueio ela permanece no bordo que violou*/
 enum confinamento { REFLEXO_DIM = 0, BLOQUEIO = 1 };

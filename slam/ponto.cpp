@@ -91,3 +91,8 @@ Eigen::Vector2d ponto::paraVetor(void)
 {
     return Eigen::Vector2d(x,y);
 }
+
+ponto ponto::polarParaCartesiano(double raio, double angulo)
+{
+	return ponto(raio*std::cos(angulo),raio*std::sin(angulo));
+}

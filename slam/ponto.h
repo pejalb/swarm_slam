@@ -22,6 +22,8 @@ class ponto {//define um ponto em 2d, num sistema cartesiano
        double norma(int p);
        //converte para Eigen::Vector2d
        Eigen::Vector2d paraVetor(void);
+	   //converte um ponto especificado por sua distancia a origem e o angulo que a reta que o intercepta juntamente com a origem forma com o eixo das abcissas, conforme medido no sentido anti-horario (em radianos)
+	   static ponto polarParaCartesiano(double raio, double angulo);
 };
 
 #endif

@@ -2,7 +2,7 @@
 #include <cstdlib>
 #include <vector>
 #include <iostream>//
-#define SEED_PADRAO 0
+
 #define DT 1
 using namespace Eigen;
 

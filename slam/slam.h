@@ -2,10 +2,7 @@
 #define SLAM_
 #include "gridMap.h"
 #include "scanMatch.h"
-//constantes inerentes ao problema
-#define LEITURAS_POR_SCAN 541
-//numero minimo de poses cujo armazenamento e garantido
-#define NUM_MINIMO_POSES 3
+#include "constantes.h"
 
 class slam {
     private:

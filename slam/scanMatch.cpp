@@ -4,9 +4,7 @@
 #include <functional>
 #include <iostream>//debugging
 
-#ifndef M_PI
-#define 	M_PI   3.14159265358979323846
-#endif
+
 
 #define DX 1.0
 #define DY 1.0
