@@ -98,7 +98,7 @@ int main()
 		int i = 0;
 		for (i = 0; i < leituras.size(); i++) {
 			std::cout << "\nIteracao " << i;
-			s.atualiza(leituras.at(i));
+			s.atualiza(leituras[i]);
 		}
 	}
 	else {
@@ -108,6 +108,6 @@ int main()
 			s.atualiza(cria_scan_de_teste());
 		}
 	}	
-	system("pause");
+	//system("pause");
     return 0;
 }

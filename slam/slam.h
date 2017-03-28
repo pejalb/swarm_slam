@@ -8,7 +8,7 @@ class slam {
     private:
         //define um vetor de poses vistas, permite descrever a trajetoria
         std::vector<pose> poses;
-        std::vector<std::vector<ponto>> scans;
+        std::vector<std::vector<ponto> > scans;
         //mapa sendo construido
         gridMap *mapa;
         //se guarda scans==true todos os scans serao armazenados, caso contrario, apenas dois serao armazenados, o atual e o predecessor imediato
@@ -24,6 +24,6 @@ class slam {
         slam(int linhas, int colunas,double tamanhoCelula,bool guardaScans=true,bool usaLogOdds = true, double probPrior = 0.5, double probOcc = 0.9, double probFree = 0.1);
         ~slam();//dtor padrao
         //atualizacao
-        void atualiza(std::vector<ponto> &scan);//atualiza a pose com um novo scan
+        void atualiza(std::vector<ponto> scan);//atualiza a pose com um novo scan
 };
 #endif

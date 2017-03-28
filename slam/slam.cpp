@@ -12,7 +12,7 @@ inline ponto slam::paraCoordenadasMapa(ponto &p)
 	p.y = p.y / tamanhoCelula;
 	return ponto(p.x,p.y);
 }
-inline void slam::paraCoordenadasMapaVector(std::vector<ponto>& scan)
+inline void slam::paraCoordenadasMapaVector(std::vector<ponto> &scan)
 {
 	for (std::vector<ponto>::iterator i = scan.begin(); i != scan.end(); i++){
 		paraCoordenadasMapa(*i);
@@ -39,7 +39,7 @@ slam::~slam()
     delete mapa;
 }
 
-void slam::atualiza(std::vector<ponto>& scan)
+void slam::atualiza(std::vector<ponto> scan)
 {
 	paraCoordenadasMapaVector(scan);
 	if (guardaScans)
