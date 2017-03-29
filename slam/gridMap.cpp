@@ -285,7 +285,7 @@ void gridMap::marcaLinha(int xInicial, int yInicial, int xFinal, int yFinal, boo
             if (xInicial >= numColunas || yInicial >= numLinhas) break;
         }
         if (decrementa)
-            incrementa(xFinal, yFinal);
+            this->incrementa(xFinal, yFinal);
         else
             this->decrementa(xFinal, yFinal);
     }

@@ -66,6 +66,7 @@ void slam::atualiza(std::vector<ponto> scan)
         scans.pop_back();
         return;
     }	    
+	//se chegou aqui nao houve excecao
 	p += atual;
 	poses.push_back(p);
    // int i;
