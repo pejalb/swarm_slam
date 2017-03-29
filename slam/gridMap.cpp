@@ -4,8 +4,7 @@
 #include <cmath>
 #include <fstream>
 #include "gridMap.h"
-#define TAM_MAX_NOME_ARQ 80
-#define TAM_MAX_NUM 10
+#include "constantes.h"
 
 //necessario no vc++
 #define _CRT_SECURE_NO_WARNINGS
@@ -28,9 +27,14 @@ gridMap::gridMap(int n, bool usaLogOdds, double probPrior,
 	double probOcc, double probFree):probOcupacao(probOcc), probPriori(probPrior), probLivre(probFree)
 {
 	if (n >= 0){
-		grid = new double[n*n];
-		if (grid == NULL)
-			std::exit(0);
+        try {
+            grid = new double[n*n];
+        }
+        catch (std::bad_alloc){
+            std::cerr << "\n Nao foi possivel alocar memoria para o mapa!" << std::endl;
+            std::exit(1);
+        }
+		
 		numLinhas = n;
 		numColunas = n;	
 		logOdds = usaLogOdds;
@@ -55,7 +59,14 @@ gridMap::gridMap(int linhas,int colunas, bool usaLogOdds,
 	double probPrior , double probOcc , double probFree ) :probOcupacao(probOcc), probPriori(probPrior), probLivre(probFree)
 {
 	if (linhas >= 0 && colunas >= 0){
-		grid = new double[linhas*colunas];
+        try {
+            grid = new double[linhas*colunas];
+        }
+        catch (std::bad_alloc) {
+            std::cerr << "\n Nao foi possivel alocar memoria para o mapa!" << std::endl;
+            std::exit(1);
+        }
+        
 		numLinhas = linhas;
 		numColunas = colunas;
 		logOdds = usaLogOdds;
@@ -89,8 +100,13 @@ gridMap::~gridMap()
 double gridMap::leMapa(int linha,int coluna)
 {
 	//retorna o valor presente na posicao linha,coluna
-	if ( linha < numLinhas && coluna < numColunas)
-		return grid[coluna*numLinhas+linha];
+    if (linha < numLinhas && coluna < numColunas) {
+        return grid[coluna*numLinhas + linha];
+        //debugging
+        //if (grid[coluna*numLinhas + linha] != 0.0)
+            //std::cout << "\n (" << linha << "," << coluna << ") = " << grid[coluna*numLinhas + linha];
+        //system("pause");
+    }
 }
 
 double gridMap::alteraMapa(int linha,int coluna,double novoValor)
@@ -241,36 +257,40 @@ double & gridMap::operator()(int linha, int coluna)//nao faz quaisquer verificac
 
 void gridMap::marcaLinha(int xInicial, int yInicial, int xFinal, int yFinal, bool decrementa)
 {
-	if (xInicial>=0 && xFinal>=0 &&yInicial >=0 && yFinal>=0&&xFinal < FOLGA*numColunas && xInicial < FOLGA*numColunas && yFinal < FOLGA*numLinhas && yInicial < FOLGA*numLinhas) {
-		/*Utiliza o algoritmo de Bresenham para marcar a regiao entre o robo e o primeiro obstaculo.
-		O argumento decrementa==true faz a probabilidade dos itens considerados obstáculos no mapa o serem de fato crescer.
-		Embora o modo padrao decremente o espaço vazio e incremente a probabilidade das regioes consideradas intransponíveis,
-		é possível inverter esse comportamento fazendo decrementa==false.
-		*/
-		int dx = std::abs(xFinal - xInicial);
-		int sx = xInicial < xFinal ? 1 : -1;
-		int dy = std::abs(yFinal - yInicial);
-		int sy = yInicial < yFinal ? 1 : -1;
-		int err = (dx > dy ? dx : -dy) / 2, e2;
-		for (;;) {
+    if (xInicial >= 0 && xFinal >= 0 && yInicial >= 0 && yFinal >= 0 && xFinal < FOLGA*numColunas && xInicial < FOLGA*numColunas && yFinal < FOLGA*numLinhas && yInicial < FOLGA*numLinhas) {
+        /*Utiliza o algoritmo de Bresenham para marcar a regiao entre o robo e o primeiro obstaculo.
+        O argumento decrementa==true faz a probabilidade dos itens considerados obstáculos no mapa o serem de fato crescer.
+        Embora o modo padrao decremente o espaço vazio e incremente a probabilidade das regioes consideradas intransponíveis,
+        é possível inverter esse comportamento fazendo decrementa==false.
+        */
+        int dx = std::abs(xFinal - xInicial);
+        int sx = xInicial < xFinal ? 1 : -1;
+        int dy = std::abs(yFinal - yInicial);
+        int sy = yInicial < yFinal ? 1 : -1;
+        int err = (dx > dy ? dx : -dy) / 2, e2;
+        for (;;) {
 
-			if (xFinal < numColunas && xInicial < numColunas && yFinal < numLinhas && yInicial < numLinhas) {
-				if (decrementa)
-					this->decrementa(xInicial, yInicial);
-				else
-					this->incrementa(xInicial, yInicial);
+            if (xFinal < numColunas && xInicial < numColunas && yFinal < numLinhas && yInicial < numLinhas) {
+                if (decrementa)
+                    this->decrementa(xInicial, yInicial);
+                else
+                    this->incrementa(xInicial, yInicial);
 
-			}
-			else
-				std::cout << " xInicial = " << xInicial << " yInicial = " << yInicial << " xFinal = " << xFinal << " yFinal = " << yFinal << std::endl;
-			if (xInicial == xFinal && yInicial == yFinal) break;
-			e2 = err;
-			if (e2 > -dx) { err -= dy; xInicial += sx; }
-			if (e2 < dy) { err += dx; yInicial += sy; }
-		}
-		if (decrementa)
-			incrementa(xFinal, yFinal);
-		else
-			this->decrementa(xFinal, yFinal);
-	}
+            }
+                //std::cout << " xInicial = " << xInicial << " yInicial = " << yInicial << " xFinal = " << xFinal << " yFinal = " << yFinal << std::endl;
+            if (xInicial == xFinal && yInicial == yFinal) break;
+            e2 = err;
+            if (e2 > -dx) { err -= dy; xInicial += sx; }
+            if (e2 < dy) { err += dx; yInicial += sy; }
+            if (xInicial >= numColunas || yInicial >= numLinhas) break;
+        }
+        if (decrementa)
+            incrementa(xFinal, yFinal);
+        else
+            this->decrementa(xFinal, yFinal);
+    }
+    else {
+        marcaLinha(xInicial>0?xInicial:0, yInicial>0?yInicial:0, xFinal>=numColunas?numColunas-1:xFinal,
+            yFinal>=numLinhas?numLinhas-1:yFinal);
+    }
 }

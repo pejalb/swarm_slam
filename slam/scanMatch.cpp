@@ -1,7 +1,9 @@
 #include "scanMatch.h"
 #include <Eigen/Dense>
 #include <cstdarg>
+#include <exception>
 #include <functional>
+
 #include <iostream>//debugging
 
 
@@ -19,7 +21,7 @@ using namespace Eigen;
 typedef std::pair<Eigen::Matrix2d, Eigen::Vector2d> TransformType;
 typedef std::vector<Eigen::Vector2d>   PointsType;
 
-TransformType icpSVD(const PointsType& src, const PointsType& dst)
+TransformType icpSVD(const PointsType& src, const PointsType& dst) 
 {
 	assert(src.size() == dst.size());
 	int pairSize = src.size();
@@ -103,7 +105,7 @@ inline double fRestricaoPadrao(Eigen::VectorXd v)
     return 0.0;//se a restricao nao-linear nao foi fornecida...usa um "placeholder"
 }
 
-pose psoScanMatch(std::vector<ponto> & scanOrigem, std::vector<ponto> & scanDestino,double estimativaInicial[3])
+pose psoScanMatch(std::vector<ponto> & scanOrigem, std::vector<ponto> & scanDestino,double estimativaInicial[3]) throw(std::domain_error)
 {
     using namespace std::placeholders;
     //assert(scanOrigem.size() == scanDestino.size());
@@ -119,17 +121,17 @@ pose psoScanMatch(std::vector<ponto> & scanOrigem, std::vector<ponto> & scanDest
     //centro_scanDestino /= (double)numPontos;
     ///*double pso_gbest(VectorXd &x, double(*fobj)(VectorXd,...), opcoesPSO &opcoes, double *limiteInferior,
     //double *limiteSuperior, double (*fConversao)(double *), double(*fRestricao)(VectorXd))*/,
-    Eigen::VectorXd x = Eigen::VectorXd::Zero(3, 1);
+    Eigen::VectorXd x;// = Eigen::VectorXd::Zero(3, 1);
     opcoesPSO opcoes;
     opcoes.coefCognitivo = 0.7;
     opcoes.coefInercia = 0.9;
     opcoes.coefSocial = 0.7;
     opcoes.limitaVelocidade = true;
-    opcoes.maxIter = 25;
+    opcoes.maxIter = 50;
     opcoes.numDimensoes = 3;
     opcoes.modoDeConfinamento = BLOQUEIO;
     opcoes.normalizaValores = false;
-    opcoes.numParticulas = 25;
+    opcoes.numParticulas = 50;
     opcoes.velMax = 0.5;
     opcoes.tolerancia = 0.1;
 	//se desejado pode criar uma estimativa
@@ -155,15 +157,17 @@ pose psoScanMatch(std::vector<ponto> & scanOrigem, std::vector<ponto> & scanDest
     std::function<double(Eigen::VectorXd)> objetivo= 
         std::bind(fobj,_1,scanOrigem, scanDestino);//wrapper para a fobj, requer apenas a transformacao
     std::function<double(Eigen::VectorXd)> restricao = fRestricaoPadrao;
-        double erro = pso_gbest(x, objetivo, opcoes, limiteInferior, limiteSuperior, restricao);
+    double erro = pso_gbest(x, objetivo, opcoes, limiteInferior, limiteSuperior, restricao);
+    if (erro < 0)
+        throw (std::domain_error("\nO processo de otimizacao obteve um valor invalido!"));
     return pose(x);
 }
 
 pose psoScanMatch(std::vector<ponto>& scanOrigem, std::vector<ponto>& scanDestino, double estimativaInicial[3],
-    std::vector<pose>& outrasPoses, double(*fRestricao)(Eigen::VectorXd, std::vector<pose>&))
+    std::vector<pose>& outrasPoses, double(*fRestricao)(Eigen::VectorXd, std::vector<pose>&)) throw(std::domain_error)
 {
     using namespace std::placeholders;
-    Eigen::VectorXd x = Eigen::VectorXd::Zero(3, 1);
+    Eigen::VectorXd x;// = Eigen::VectorXd::Zero(3, 1);
     opcoesPSO opcoes;
     opcoes.coefCognitivo = 0.7;
     opcoes.coefInercia = 0.9;
@@ -174,7 +178,7 @@ pose psoScanMatch(std::vector<ponto>& scanOrigem, std::vector<ponto>& scanDestin
     opcoes.modoDeConfinamento = BLOQUEIO;
     opcoes.normalizaValores = false;
     opcoes.numParticulas = 50;
-    opcoes.velMax = 0.05;
+    opcoes.velMax = 0.5;
     opcoes.tolerancia = 0.1;
     double limiteInferior[3] = { estimativaInicial[0] - DX,estimativaInicial[1] - DY,estimativaInicial[2] - D_ANG };
     double limiteSuperior[3] = { estimativaInicial[0] + DY,estimativaInicial[1] + DY,estimativaInicial[2] + D_ANG };
@@ -196,5 +200,8 @@ pose psoScanMatch(std::vector<ponto>& scanOrigem, std::vector<ponto>& scanDestin
     std::function<double(Eigen::VectorXd)> restricao =
             std::bind(fRestricao, _1,outrasPoses );
     double erro = pso_gbest(x, objetivo, opcoes, limiteInferior, limiteSuperior, restricao);
+    //std::cout << "\n x = " << x(0) << " y = " << x(1) << " angulo = " << x(2) << std::endl;
+    if (erro < 0.0)
+        throw(std::domain_error("\nO processo de otimizacao obteve um valor invalido!"));
     return pose(x);
 }

@@ -60,7 +60,7 @@ double pso_gbest(VectorXd &x, std::function<double(Eigen::VectorXd)> fobj, opcoe
         for (j = 0; j < opcoes.numParticulas; j++) {
             apt = fobj(posicoes.row(j)) + fRestricao(posicoes.row(j));
             //apt = fRestricao == NULL ? fobj(posicoes.row(j)) : fobj(posicoes.row(j)) + fRestricao(posicoes.row(j));            
-            if (iter == 0 || apt < melhoresAptidoes[j] && j != idxGbest) {
+            if ((iter == 0 || apt < melhoresAptidoes[j] && j != idxGbest) && std::isnormal(apt)) {
                 melhoresAptidoes[j] = apt;
                 pbest.row(j) = posicoes.row(j);
             }
@@ -68,7 +68,7 @@ double pso_gbest(VectorXd &x, std::function<double(Eigen::VectorXd)> fobj, opcoe
                 idxGbest = 0;
                 gbest = posicoes.row(0);
             }
-            if (iter == 0 || apt < melhoresAptidoes[idxGbest] && apt < gbestAnterior) {
+            if ((iter == 0 || apt < melhoresAptidoes[idxGbest] && apt < gbestAnterior) &&std::isnormal(apt)) {
                 gbestAnterior = melhoresAptidoes[idxGbest];
                 melhoresAptidoes[j] = apt;
                 gbest = posicoes.row(j);
@@ -84,14 +84,17 @@ double pso_gbest(VectorXd &x, std::function<double(Eigen::VectorXd)> fobj, opcoe
             if (opcoes.limitaVelocidade) {
                 for (i = 0; i < opcoes.numParticulas; i++) {
                     normaVel = velocidades.row(i).norm();
-                    if (normaVel > opcoes.velMax) {
+                    if (normaVel>0 && normaVel > opcoes.velMax && !std::isnan(normaVel) && !std::isinf(normaVel)) {
                         velocidades.row(i).normalize();
                         velocidades.row(i) *= opcoes.velMax;
+                    }
+                    else {
+                        velocidades.row(i).Random(1,opcoes.numDimensoes)*opcoes.velMax;//se for invalido sorteia um valor
                     }
                 }
             }
             //atualiza posicoes
-            posicoes = posicoes + velocidades*DT;
+            posicoes = posicoes + velocidades;
             //garante confinamento
             switch (opcoes.modoDeConfinamento){
             case BLOQUEIO:
@@ -124,12 +127,14 @@ double pso_gbest(VectorXd &x, std::function<double(Eigen::VectorXd)> fobj, opcoe
             }           
             if (std::abs(melhoresAptidoes[idxGbest] - gbestAnterior) <= opcoes.tolerancia)
 				estagnacao--;                
-           // std::cout << "\niter" << iter << " gbest = " << apt;//debugging
-        }
-        
-    x = posicoes.row(idxGbest);
+           // std::cout << "\niter" << iter << " gbest = " << apt ;//debugging
+        }        
+    x = posicoes.row(idxGbest);    
     apt = melhoresAptidoes[idxGbest];
 //    delete[] melhoresAptidoes;
   //  delete[] faixasDeValores;
-    return apt;
+    if (std::isnormal(apt))//cuidado com zero (seria ideal...)!!!
+        return apt;
+    else
+        return -1.0;//pela forma como foi definida...fobj (no problema) e nao negativa!
 }

@@ -9,6 +9,12 @@
 #define M_PI (3.14159265358979323846)
 #endif
 
+#ifdef GRIDMAP_
+#define TAM_MAX_NOME_ARQ 80 //tamanho maximo para o nome de um arquivo de mapa
+#define TAM_MAX_NUM 10 //numero maximo de digitos que podem suceder o numero de arquivo
+#endif
+
+
 #ifdef TESTE_SLAM_BASE_
 #define A_270_GRAUS (4.712388980384690)
 #define A_180_GRAUS M_PI

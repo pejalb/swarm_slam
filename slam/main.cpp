@@ -11,7 +11,7 @@
 #include "constantes.h"
 #include <algorithm>
 
-#define TESTE_CSV_ 1
+#define TESTE_CSV_ 0
 
 
 inline double rand_uniforme(double min, double max)
@@ -63,6 +63,7 @@ std::vector < std::vector<double> > leScansCSV(char *nomeArq,const int tamLinha=
 		while (std::getline(dados, buffer)){
 			Tokenize(buffer, tmp);
 			scans.push_back(tmp);
+            tmp.clear();
 		}
 		dados.close();
 	}	
@@ -82,6 +83,7 @@ void paraCoordenadasCartesianas(std::vector < std::vector<double> > polarScans, 
 			buffer.push_back(ponto::polarParaCartesiano(it->at(i), ((double)i)*incrementoAngular - offsetAngular));
 		}
 		pontos.push_back(buffer);
+        buffer.clear();
 	}
 }
 
@@ -98,7 +100,7 @@ int main()
 		int i = 0;
 		for (i = 0; i < leituras.size(); i++) {
 			std::cout << "\nIteracao " << i;
-			s.atualiza(leituras[i]);
+			s.atualiza(leituras.at(i));
 		}
 	}
 	else {
@@ -108,6 +110,6 @@ int main()
 			s.atualiza(cria_scan_de_teste());
 		}
 	}	
-	//system("pause");
+	system("pause");
     return 0;
 }
