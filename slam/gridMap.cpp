@@ -11,8 +11,18 @@
 //diferenca absoluta
 #define ABS(a) (a)>=0?a:(-a)
 #define DIFF_ABS(x,y) (x>0&&y>0)?(x>y?(x-y):(y-x)):0
-//folga maxima para escapamento das bordas
-#define FOLGA 2
+//verifica faixa
+inline bool verificaIndice(int idx, int min, int max) 
+{
+	//retorna true se idx pertence a [min,max[
+	if (idx >= min && idx < max)
+		return true;
+	else
+		return false;
+}
+
+
+
 gridMap::gridMap():probOcupacao(0.9), probPriori(0.5), probLivre(0.1)
 {
 	//ctr padrao
@@ -257,7 +267,12 @@ double & gridMap::operator()(int linha, int coluna)//nao faz quaisquer verificac
 
 void gridMap::marcaLinha(int xInicial, int yInicial, int xFinal, int yFinal, bool decrementa)
 {
-    if (xInicial >= 0 && xFinal >= 0 && yInicial >= 0 && yFinal >= 0 && xFinal < FOLGA*numColunas && xInicial < FOLGA*numColunas && yFinal < FOLGA*numLinhas && yInicial < FOLGA*numLinhas) {
+	bool teste_xInicial = verificaIndice(xInicial, 0, numColunas);
+	bool teste_xFinal = verificaIndice(xFinal, 0, numColunas);
+	bool teste_yInicial = verificaIndice(yInicial, 0, numLinhas);
+	bool teste_yFinal = verificaIndice(yFinal, 0, numLinhas);
+
+    if ( teste_xInicial && teste_xFinal  && teste_yInicial && teste_yFinal ) {
         /*Utiliza o algoritmo de Bresenham para marcar a regiao entre o robo e o primeiro obstaculo.
         O argumento decrementa==true faz a probabilidade dos itens considerados obstáculos no mapa o serem de fato crescer.
         Embora o modo padrao decremente o espaço vazio e incremente a probabilidade das regioes consideradas intransponíveis,
@@ -269,14 +284,10 @@ void gridMap::marcaLinha(int xInicial, int yInicial, int xFinal, int yFinal, boo
         int sy = yInicial < yFinal ? 1 : -1;
         int err = (dx > dy ? dx : -dy) / 2, e2;
         for (;;) {
-
-            if (xFinal < numColunas && xInicial < numColunas && yFinal < numLinhas && yInicial < numLinhas) {
-                if (decrementa)
-                    this->decrementa(xInicial, yInicial);
-                else
-                    this->incrementa(xInicial, yInicial);
-
-            }
+            if (decrementa)
+                this->decrementa(xInicial, yInicial);
+            else
+                this->incrementa(xInicial, yInicial);
                 //std::cout << " xInicial = " << xInicial << " yInicial = " << yInicial << " xFinal = " << xFinal << " yFinal = " << yFinal << std::endl;
             if (xInicial == xFinal && yInicial == yFinal) break;
             e2 = err;
@@ -289,8 +300,35 @@ void gridMap::marcaLinha(int xInicial, int yInicial, int xFinal, int yFinal, boo
         else
             this->decrementa(xFinal, yFinal);
     }
-    else {
-        marcaLinha(xInicial>0?xInicial:0, yInicial>0?yInicial:0, xFinal>=numColunas?numColunas-1:xFinal,
-            yFinal>=numLinhas?numLinhas-1:yFinal);
-    }
+	//o uso de recursao se encarregara de corrigir casos com mais de uma falha(!?)
+	else {
+		if (!teste_xInicial) {
+			double derivada = (yFinal - yInicial) / (xFinal - xInicial);//y'(x)
+			if (xInicial < 0)
+				marcaLinha(0, std::ceil(yFinal - xFinal*derivada), xFinal, yFinal);
+			else //violou o limite superior
+				marcaLinha(numColunas, std::floor(yFinal-derivada*(xFinal-numColunas)), xFinal, yFinal);
+		}
+		if (!teste_xFinal) {
+			double derivada = (yFinal - yInicial) / (xFinal - xInicial);//y'(x)
+			if (xFinal < 0)
+				marcaLinha(xInicial, yInicial, 0, std::ceil(yInicial + (-xInicial)*derivada));
+			else //violou o limite superior
+				marcaLinha(xInicial, yInicial, numLinhas, std::floor(yInicial+derivada*(numLinhas-xInicial)) );
+		}
+		if (!teste_yInicial) {
+			double derivada = (yFinal - yInicial) / (xFinal - xInicial);//y'(x)
+			if (yInicial < 0)
+				marcaLinha(std::ceil(xFinal-(yFinal/derivada)), 0, xFinal, yFinal);
+			else //violou o limite superior
+				marcaLinha(std::floor(xFinal-(yFinal-numColunas)/derivada), numColunas, xFinal, yFinal);
+		}
+		if (!teste_yFinal) {
+			double derivada = (yFinal - yInicial) / (xFinal - xInicial);//y'(x)
+			if (yFinal < 0)
+				marcaLinha(xInicial, yInicial, std::ceil(xInicial-yInicial/derivada), 0);
+			else //violou o limite superior
+				marcaLinha(xInicial, yInicial, std::floor(yInicial+(numColunas-yInicial)/derivada), numColunas);
+		}
+	}
 }

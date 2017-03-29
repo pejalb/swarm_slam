@@ -135,8 +135,8 @@ pose psoScanMatch(std::vector<ponto> & scanOrigem, std::vector<ponto> & scanDest
     opcoes.velMax = 0.5;
     opcoes.tolerancia = 0.1;
 	//se desejado pode criar uma estimativa
-	TransformType RT = icpSVD(converte_ponto_vector(scanOrigem), converte_ponto_vector(scanDestino));
-	transformTypeToDouble(RT, estimativaInicial);
+	//TransformType RT = icpSVD(converte_ponto_vector(scanOrigem), converte_ponto_vector(scanDestino));
+	//transformTypeToDouble(RT, estimativaInicial);
 	//pose poseRelativa = psoScanMatch(scanOrigem, scanDestino, estimativaInicial);
 //	pose poseRelativa(0.0, 0.0, 0.0);
 	double limiteInferior[3] = { estimativaInicial[0] - DX,estimativaInicial[1] - DY,estimativaInicial[2] - D_ANG };
@@ -180,6 +180,9 @@ pose psoScanMatch(std::vector<ponto>& scanOrigem, std::vector<ponto>& scanDestin
     opcoes.numParticulas = 50;
     opcoes.velMax = 0.5;
     opcoes.tolerancia = 0.1;
+	//cria estimativa inicial...
+	//TransformType RT = icpSVD(converte_ponto_vector(scanOrigem), converte_ponto_vector(scanDestino));
+	//transformTypeToDouble(RT, estimativaInicial);
     double limiteInferior[3] = { estimativaInicial[0] - DX,estimativaInicial[1] - DY,estimativaInicial[2] - D_ANG };
     double limiteSuperior[3] = { estimativaInicial[0] + DY,estimativaInicial[1] + DY,estimativaInicial[2] + D_ANG };
     //ponto center_src(0, 0);

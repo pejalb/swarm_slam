@@ -7,6 +7,7 @@ class pose : public ponto {
     public :
         double angulo;//a componente angular indica a orientacao do versor
         pose();
+		pose(const pose &);
         pose(double x, double y, double angulo);
         pose(ponto &p, double angulo);
         pose(Eigen::VectorXd &v);//bugged

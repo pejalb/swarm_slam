@@ -92,7 +92,7 @@ void paraCoordenadasCartesianas(std::vector < std::vector<double> > polarScans, 
 
 int main()
 {
-	slam s(200, 200, ESCALA); 
+	slam s(500, 500, ESCALA); 
 	//teste de funcionamento...
 	auto tmp = leScansCSV("mit-csail.csv");
 	if(TESTE_CSV_) {

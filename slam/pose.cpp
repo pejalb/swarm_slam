@@ -4,6 +4,10 @@ pose::pose():ponto()
 {
     angulo = 0.0;
 }
+pose::pose(const pose &p):ponto (p)
+{
+	this->angulo = p.angulo;
+}
 pose::pose(double x, double y, double angulo) : ponto(x,y)
 {
     this->angulo = angulo;
