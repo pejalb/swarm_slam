@@ -301,59 +301,63 @@ void gridMap::marcaLinha(int xInicial, int yInicial, int xFinal, int yFinal, boo
             this->decrementa(xFinal, yFinal);
     }
 	else { //tenta corrigir os indices para valores aceitaveis
-		if (!teste_xInicial) {
-			double derivada = (yFinal - yInicial) / (xFinal - xInicial);//y'(x)
-			if (xInicial < 0) {
-				xInicial = 0;
-				yInicial = std::ceil(yFinal - xFinal*derivada);
-			}
+		double dx = std::abs(xFinal - xInicial);
+		double dy = std::abs(yFinal - yInicial);
+		if (std::isnormal(dx) && std::isnormal(dy)) {
+			if (!teste_xInicial) {
+				double derivada = dy / dx;//y'(x)
+				if (xInicial < 0) {
+					xInicial = 0;
+					yInicial = std::ceil(yFinal - xFinal*derivada);
+				}
 				//marcaLinha(0, std::ceil(yFinal - xFinal*derivada), xFinal, yFinal);
-			else {
-				xInicial = numColunas;//violou o limite superior
-				yInicial = std::floor(yFinal - derivada*(xFinal - numColunas));
-			}
+				else {
+					xInicial = numColunas;//violou o limite superior
+					yInicial = std::floor(yFinal - derivada*(xFinal - numColunas));
+				}
 				//marcaLinha(numColunas, std::floor(yFinal-derivada*(xFinal-numColunas)), xFinal, yFinal);
-		}
-		if (!teste_xFinal) {
-			double derivada = (yFinal - yInicial) / (xFinal - xInicial);//y'(x)
-			if (xFinal < 0) {
-				xFinal = 0;
-				yFinal = std::ceil(yInicial - (xInicial)*derivada);
 			}
+			if (!teste_xFinal) {
+				double derivada = dy / dx;//y'(x)
+				if (xFinal < 0) {
+					xFinal = 0;
+					yFinal = std::ceil(yInicial - (xInicial)*derivada);
+				}
 				//marcaLinha(xInicial, yInicial, 0, std::ceil(yInicial + (-xInicial)*derivada));
-			else {
-				//violou o limite superior
-				xFinal = numLinhas;
-				yFinal = std::floor(yInicial + derivada*(numLinhas - xInicial));
-				//marcaLinha(xInicial, yInicial, numLinhas, std::floor(yInicial+derivada*(numLinhas-xInicial)) );
+				else {
+					//violou o limite superior
+					xFinal = numLinhas;
+					yFinal = std::floor(yInicial + derivada*(numLinhas - xInicial));
+					//marcaLinha(xInicial, yInicial, numLinhas, std::floor(yInicial+derivada*(numLinhas-xInicial)) );
+				}
 			}
-		}
-		if (!teste_yInicial) {
-			double derivada = (yFinal - yInicial) / (xFinal - xInicial);//y'(x)
-			if (yInicial < 0) {
-				xInicial = std::ceil(xFinal - (yFinal / derivada));
-				yInicial = 0;
+			if (!teste_yInicial) {
+				double derivada = dy / dx;//y'(x)
+				if (yInicial < 0) {
+					xInicial = std::ceil(xFinal - (yFinal / derivada));
+					yInicial = 0;
 					//marcaLinha(std::ceil(xFinal-(yFinal/derivada)), 0, xFinal, yFinal);
-			}
-			else {//violou o limite superior
-				xInicial = std::floor(xFinal - (yFinal - numColunas) / derivada);
-				yInicial = numColunas;
-			}
+				}
+				else {//violou o limite superior
+					xInicial = std::floor(xFinal - (yFinal - numColunas) / derivada);
+					yInicial = numColunas;
+				}
 				//marcaLinha(std::floor(xFinal-(yFinal-numColunas)/derivada), numColunas, xFinal, yFinal);
-		}
-		if (!teste_yFinal) {
-			double derivada = (yFinal - yInicial) / (xFinal - xInicial);//y'(x)
-			if (yFinal < 0) {
-				xFinal = std::ceil(xInicial - yInicial / derivada);
-				yFinal = 0;
 			}
+			if (!teste_yFinal) {
+				double derivada = dy / dx;//y'(x)
+				if (yFinal < 0) {
+					xFinal = std::ceil(xInicial - yInicial / derivada);
+					yFinal = 0;
+				}
 				//marcaLinha(xInicial, yInicial, std::ceil(xInicial-yInicial/derivada), 0);
-			else {
-				xFinal = std::floor(yInicial + (numColunas - yInicial) / derivada);//violou o limite superior
-				yFinal = numColunas;
-				//marcaLinha(xInicial, yInicial, std::floor(yInicial+(numColunas-yInicial)/derivada), numColunas);
+				else {
+					xFinal = std::floor(yInicial + (numColunas - yInicial) / derivada);//violou o limite superior
+					yFinal = numColunas;
+					//marcaLinha(xInicial, yInicial, std::floor(yInicial+(numColunas-yInicial)/derivada), numColunas);
+				}
 			}
+			marcaLinha(xInicial, yInicial, xFinal, yFinal);
 		}
-		marcaLinha(xInicial, yInicial, xFinal, yFinal);
 	}
 }
