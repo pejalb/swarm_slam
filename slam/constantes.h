@@ -31,26 +31,27 @@
 
 #ifdef SLAM_
 //constantes inerentes ao problema
-//para aria 541
-#ifdef TESTE_CSV_
-#if TESTE_CSV_
+
+#if TESTE_CSV_ //caso seja um teste com arquivo csv de leituras 
 #define ESCALA (2.0)
 #define ESPACO_ANG A_270_GRAUS
 #define MEIO_ESPACO_ANG A_135_GRAUS
 #define LEITURAS_POR_SCAN (361)
 //numero minimo de poses cujo armazenamento e garantido
 #define NUM_MINIMO_POSES (700)
-#else
+
+#else //caso se trate de um ensaio rodando onboard no p3dx
 #define ESCALA 1000.0
 #define ESPACO_ANG A_180_GRAUS
 #define MEIO_ESPACO_ANG A_90_GRAUS
 #define SCANS_DE_TESTE (1000)
 #define NUM_MAX_SCANS (700)
-#define LEITURAS_POR_SCAN (541)
+#define LEITURAS_POR_SCAN (541) //para aria 541 leituras por scan
 //numero minimo de poses cujo armazenamento e garantido
 #define NUM_MINIMO_POSES (600)
 #endif // TESTE_CSV==1
+
 #endif
-#endif
+
 
 #endif
