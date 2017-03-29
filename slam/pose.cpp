@@ -14,11 +14,9 @@ pose::pose(ponto & p, double angulo):ponto(p)
     this->angulo = angulo;
 }
 
-pose::pose(Eigen::VectorXd &v)
+pose::pose(Eigen::VectorXd &v):ponto(v(0),v(1))
 {
-    x = v(0);
-    y = v(1);
-    angulo = v(2);
+    this->angulo = v(2);
 }
 
 pose & pose::operator=(const pose & rhs)

@@ -71,8 +71,10 @@ void slam::atualiza(std::vector<ponto> scan)
 	poses.push_back(p);
    // int i;
     std::vector<ponto>::iterator it = scan.begin();
+	ponto tmp;
     for (it = scan.begin(); it != scan.end(); it++) {
-		mapa->marcaLinha(std::round(p.x),std::round(p.y), std::round(it->x), std::round(it->y));
+		tmp = p + (*it);//medir o tempo requerido nesse trecho
+		mapa->marcaLinha(std::round(p.x),std::round(p.y), std::round(tmp.x), std::round(tmp.y));
 	}
     std::ofstream arqPoses; arqPoses.open("poses", std::ios::out | std::ios::app);
     if (poses.size() == 1) {

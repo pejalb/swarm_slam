@@ -3,7 +3,6 @@
 #include <vector>
 #include <iostream>//
 
-#define DT 1
 using namespace Eigen;
 
 
@@ -17,20 +16,24 @@ double pso_gbest(VectorXd &x, std::function<double(Eigen::VectorXd)> fobj, opcoe
     double *limiteSuperior, std::function<double(Eigen::VectorXd)> fRestricao)
 {
     //cria enxame
-    MatrixXd posicoes = 0.5*(MatrixXd::Random(opcoes.numParticulas, opcoes.numDimensoes) + MatrixXd::Constant(opcoes.numParticulas, opcoes.numDimensoes, 0.5));//[0,1]
-    MatrixXd pbest; pbest = posicoes;
-    VectorXd gbest = posicoes.row(0);
+	MatrixXd posicoes(opcoes.numParticulas, opcoes.numDimensoes); posicoes.setRandom();
+	posicoes += MatrixXd::Constant(opcoes.numParticulas, opcoes.numDimensoes, 0.5);
+	posicoes *= 0.5;//limita os valores a [0,1]
+    MatrixXd pbest(opcoes.numParticulas, opcoes.numDimensoes); pbest = posicoes;
+	VectorXd gbest = posicoes.row(0);
     //double *melhoresAptidoes = new double[opcoes.numParticulas];
     std::vector <double> melhoresAptidoes; melhoresAptidoes.reserve(opcoes.numParticulas);
 
-    MatrixXd velocidades = (MatrixXd::Random(opcoes.numParticulas, opcoes.numDimensoes))*opcoes.velMax;//[-velMax,velMax]
-
+	MatrixXd velocidades(opcoes.numParticulas, opcoes.numDimensoes); //(MatrixXd::Random(opcoes.numParticulas, opcoes.numDimensoes))*opcoes.velMax;//[-velMax,velMax]
+	//velocidades.setRandom();
+	velocidades.setZero();//tentativa de descobrir onde comecam os -nan(ind)
+	//velocidades *= opcoes.velMax;
     //cria matrizes de update
     //MatrixXd inercia = MatrixXd::Identity(opcoes.numDimensoes, opcoes.numDimensoes)*op;
     //inicializa todas as particulas    
     int i, iter, idxGbest;//gbest e um indice para a melhor particula do enxame
     register int j;
-
+	double apt,violacaoLim, normaVel, gbestApt,gbestAnterior;
     //completa a inicializacao
     //double *faixasDeValores = new double[opcoes.numDimensoes];
 
@@ -40,7 +43,10 @@ double pso_gbest(VectorXd &x, std::function<double(Eigen::VectorXd)> fobj, opcoe
     }
     //inicializa aptidoes
     for (j = 0; j < opcoes.numParticulas; j++) {
-        melhoresAptidoes.push_back(INFINITY);
+		apt = fobj(posicoes.row(j));
+		if (j == 0 || apt < gbestApt)
+			gbestApt = apt;
+        melhoresAptidoes.push_back(apt);		
     }
     //vetorizar essa parte se possivel
     for (i = 0; i < opcoes.numParticulas; i++) {
@@ -50,9 +56,9 @@ double pso_gbest(VectorXd &x, std::function<double(Eigen::VectorXd)> fobj, opcoe
         }
     }
     idxGbest = 0;//na primeira iteracao
-    double apt, violacaoLim, normaVel,gbestAnterior=INFINITY;
-
-    int estagnacao = opcoes.maxIter >> 1;
+    
+	const int maxIterEstagnado = opcoes.maxIter >> 1;
+	int estagnacao = maxIterEstagnado;
     //o algoritmo tradicional, possibilita que haja modificao do melhor historico...
     //inicia processo
     for (iter = 0; (iter < opcoes.maxIter) && (estagnacao>0); iter++) {
@@ -68,8 +74,9 @@ double pso_gbest(VectorXd &x, std::function<double(Eigen::VectorXd)> fobj, opcoe
                 idxGbest = 0;
                 gbest = posicoes.row(0);
             }
-            if ((iter == 0 || apt < melhoresAptidoes[idxGbest] && apt < gbestAnterior) &&std::isnormal(apt)) {
-                gbestAnterior = melhoresAptidoes[idxGbest];
+            if ((iter == 0 || apt < gbestApt) &&(std::isnormal(apt) || apt==0.0)) {
+				gbestAnterior = gbestApt;//para ser possivel conferir se ha estagnacao do processo de busca
+                gbestApt = apt;
                 melhoresAptidoes[j] = apt;
                 gbest = posicoes.row(j);
                 idxGbest = j;
@@ -125,8 +132,10 @@ double pso_gbest(VectorXd &x, std::function<double(Eigen::VectorXd)> fobj, opcoe
                 }
                 break;
             }           
-            if (std::abs(melhoresAptidoes[idxGbest] - gbestAnterior) <= opcoes.tolerancia)
-				estagnacao--;                
+			if (std::abs(gbestApt - gbestAnterior) <= opcoes.tolerancia)
+				estagnacao--;//diminui o numero de iteracoes permitidas com o mesmo valor
+			else
+				estagnacao = maxIterEstagnado;//quebrou-se a estagnacao...reinicie a contagem
            // std::cout << "\niter" << iter << " gbest = " << apt ;//debugging
         }        
     x = posicoes.row(idxGbest);    

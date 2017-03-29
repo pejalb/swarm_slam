@@ -29,6 +29,12 @@
 #define SEED_PADRAO (0)
 #endif
 
+#ifdef SCAN_MATCH_
+#define DX 2.0
+#define DY 2.0
+#define D_ANG M_PI
+#endif
+
 #ifdef SLAM_
 //constantes inerentes ao problema
 
@@ -39,6 +45,7 @@
 #define LEITURAS_POR_SCAN (361)
 //numero minimo de poses cujo armazenamento e garantido
 #define NUM_MINIMO_POSES (700)
+#define SCANS_DE_TESTE (0)
 
 #else //caso se trate de um ensaio rodando onboard no p3dx
 #define ESCALA 1000.0

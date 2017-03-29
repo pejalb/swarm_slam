@@ -1,4 +1,5 @@
 #include "scanMatch.h"
+#include "constantes.h"
 #include <Eigen/Dense>
 #include <cstdarg>
 #include <exception>
@@ -8,9 +9,7 @@
 
 
 
-#define DX 1.0
-#define DY 1.0
-#define D_ANG M_PI
+
 inline double rand_uniforme(double min, double max)
 {
     return (std::rand()*(max - min) / RAND_MAX) + min;
@@ -89,6 +88,7 @@ Eigen::Transform<double, 2, Eigen::Affine> cria_transformacao(double angulo, dou
 
 double fobj(Eigen::VectorXd v,std::vector<ponto> & scanOrigem, std::vector<ponto> & scanDestino)
 {
+	//std::cout << "\nv =" << v(0) << "," << v(1) << "," << v(2)<<std::endl;//debugging -nan(ind)
     pose p(v);
     double erro=0.0;
     int numPontos = scanOrigem.size();

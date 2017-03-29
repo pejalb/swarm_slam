@@ -9,7 +9,7 @@ class pose : public ponto {
         pose();
         pose(double x, double y, double angulo);
         pose(ponto &p, double angulo);
-        pose(Eigen::VectorXd &v);
+        pose(Eigen::VectorXd &v);//bugged
         pose &operator=(const pose &rhs);
         pose operator+(const pose& rhs);//retorna a composicao da presente pose com uma pose relativa
         pose& operator+=(const pose& rhs);//retorna a composicao da presente pose com uma pose relativa
