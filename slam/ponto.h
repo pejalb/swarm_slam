@@ -20,6 +20,8 @@ class ponto {//define um ponto em 2d, num sistema cartesiano
        double norma(void);
        //norma L^p
        double norma(int p);
+       //||.||^2
+       double quadradoNorma(void);
        //converte para Eigen::Vector2d
        Eigen::Vector2d paraVetor(void);
 	   //converte um ponto especificado por sua distancia a origem e o angulo que a reta que o intercepta juntamente com a origem forma com o eixo das abcissas, conforme medido no sentido anti-horario (em radianos)

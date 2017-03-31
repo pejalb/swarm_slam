@@ -19,11 +19,13 @@ class slam {
 		inline ponto paraCoordenadasMapa(double x, double y);
 		inline ponto paraCoordenadasMapa(ponto &);
 		inline void paraCoordenadasMapaVector(std::vector<ponto> &);
+
     public:
         slam();//ctor padrao
         slam(int linhas, int colunas,double tamanhoCelula,bool guardaScans=true,bool usaLogOdds = true, double probPrior = 0.5, double probOcc = 0.9, double probFree = 0.1);
         ~slam();//dtor padrao
         //atualizacao
         void atualiza(std::vector<ponto> scan);//atualiza a pose com um novo scan
+        void corrige(void);//calcula poses etc, mas nao atualiza o mapa
 };
 #endif

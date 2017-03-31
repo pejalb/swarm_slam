@@ -30,8 +30,8 @@
 #endif
 
 #ifdef SCAN_MATCH_
-#define DX 2.0
-#define DY 2.0
+#define DX 1.0
+#define DY 1.0
 #define D_ANG M_PI
 #endif
 

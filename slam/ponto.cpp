@@ -87,6 +87,11 @@ double ponto::norma(int p)
     return std::pow(std::pow(x, p) + std::pow(y, p), 1.0 / ((double)p));//comparar performance..com
 }
 
+double ponto::quadradoNorma(void)
+{
+    return x*x + y*y;
+}
+
 Eigen::Vector2d ponto::paraVetor(void)
 {
     return Eigen::Vector2d(x,y);

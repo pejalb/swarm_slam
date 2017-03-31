@@ -24,6 +24,7 @@ double pso_gbest(VectorXd &x, std::function<double(Eigen::VectorXd)> fobj, opcoe
     //double *melhoresAptidoes = new double[opcoes.numParticulas];
     std::vector <double> melhoresAptidoes; melhoresAptidoes.reserve(opcoes.numParticulas);
 
+
 	MatrixXd velocidades(opcoes.numParticulas, opcoes.numDimensoes); //(MatrixXd::Random(opcoes.numParticulas, opcoes.numDimensoes))*opcoes.velMax;//[-velMax,velMax]
 	//velocidades.setRandom();
 	velocidades.setZero();//tentativa de descobrir onde comecam os -nan(ind)
@@ -44,9 +45,12 @@ double pso_gbest(VectorXd &x, std::function<double(Eigen::VectorXd)> fobj, opcoe
     //inicializa aptidoes
     for (j = 0; j < opcoes.numParticulas; j++) {
 		apt = fobj(posicoes.row(j));
-		if (j == 0 || apt < gbestApt)
-			gbestApt = apt;
-        melhoresAptidoes.push_back(apt);		
+        if (j == 0 || apt < gbestApt) {
+            gbestAnterior=gbestApt = apt;
+            idxGbest = j;
+        }
+        melhoresAptidoes.push_back(apt);	
+        pbest.row(j) = posicoes.row(j);
     }
     //vetorizar essa parte se possivel
     for (i = 0; i < opcoes.numParticulas; i++) {
@@ -55,7 +59,7 @@ double pso_gbest(VectorXd &x, std::function<double(Eigen::VectorXd)> fobj, opcoe
             posicoes(i, j) += limiteInferior[j];
         }
     }
-    idxGbest = 0;//na primeira iteracao
+    //idxGbest = 0;//na primeira iteracao
     
 	const int maxIterEstagnado = opcoes.maxIter >> 1;
 	int estagnacao = maxIterEstagnado;
@@ -68,6 +72,7 @@ double pso_gbest(VectorXd &x, std::function<double(Eigen::VectorXd)> fobj, opcoe
             //apt = fRestricao == NULL ? fobj(posicoes.row(j)) : fobj(posicoes.row(j)) + fRestricao(posicoes.row(j));            
             if ((iter == 0 || apt < melhoresAptidoes[j] && j != idxGbest) && std::isnormal(apt)) {
                 melhoresAptidoes[j] = apt;
+
                 pbest.row(j) = posicoes.row(j);
             }
             if (iter == 0 && j == 0) {

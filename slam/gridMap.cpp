@@ -107,6 +107,17 @@ gridMap::~gridMap()
 	grid = NULL;
 }
 
+void gridMap::reset(void)
+{
+    double logPrior = std::log(probPriori / (1 - probPriori));
+    for (int i = 0; i < numLinhas; i++) {
+        for (int j = 0; j < numColunas; j++) {
+            alteraMapa(i, j, logPrior);
+        }
+    }
+}
+
+
 double gridMap::leMapa(int linha,int coluna)
 {
 	//retorna o valor presente na posicao linha,coluna
@@ -265,7 +276,7 @@ double & gridMap::operator()(int linha, int coluna)//nao faz quaisquer verificac
 
 //metodo de breesenham para desenhar linhas
 
-void gridMap::marcaLinha(int xInicial, int yInicial, int xFinal, int yFinal, bool decrementa)
+void gridMap::marcaLinha(int xInicial, int yInicial, int xFinal, int yFinal, int maxRec, bool decrementa)
 {
 	bool teste_xInicial = verificaIndice(xInicial, 0, numColunas);
 	bool teste_xFinal = verificaIndice(xFinal, 0, numColunas);
@@ -303,7 +314,7 @@ void gridMap::marcaLinha(int xInicial, int yInicial, int xFinal, int yFinal, boo
 	else { //tenta corrigir os indices para valores aceitaveis
 		double dx = std::abs(xFinal - xInicial);
 		double dy = std::abs(yFinal - yInicial);
-		if (std::isnormal(dx) && std::isnormal(dy)) {
+		if (std::isnormal(dx) && std::isnormal(dy) && maxRec>0) {
 			if (!teste_xInicial) {
 				double derivada = dy / dx;//y'(x)
 				if (xInicial < 0) {
@@ -357,7 +368,7 @@ void gridMap::marcaLinha(int xInicial, int yInicial, int xFinal, int yFinal, boo
 					//marcaLinha(xInicial, yInicial, std::floor(yInicial+(numColunas-yInicial)/derivada), numColunas);
 				}
 			}
-			marcaLinha(xInicial, yInicial, xFinal, yFinal);
+			marcaLinha(xInicial, yInicial, xFinal, yFinal,--maxRec);
 		}
 	}
 }

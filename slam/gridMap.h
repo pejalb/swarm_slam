@@ -23,13 +23,14 @@ class gridMap {
 		gridMap(int linhas,int colunas,bool usaLogOdds = true,double probPrior = 0.5, double probOcc = 0.9, double probFree = 0.1);//cria mapa de tamanho linhas x colunas
 		~gridMap();//destrutor padrao
 		//acesso
+        void reset(void);
 		double leMapa(int linha,int coluna);
 		double alteraMapa(int linha,int coluna,double novoValor);
         inline double incrementa(int linha,int coluna);
         inline double decrementa(int linha,int coluna);
         inline double tamanhoHorizontal(void);
         inline double tamanhoVertical(void);
-		void marcaLinha(int xInicial,int yInicial,int xFinal,int yFinal, bool decrementa = true);
+		void marcaLinha(int xInicial,int yInicial,int xFinal,int yFinal, int maxRec=3,bool decrementa = true);
 		//retorna mapa como matriz eigen
 		/*Pode ser ineficiente para mapas grandes!!!
 		Vale considerar o uso de memoria compartilhada e um ponteiro para acesso direto (se necessario).*/

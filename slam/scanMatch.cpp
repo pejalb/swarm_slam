@@ -93,7 +93,7 @@ double fobj(Eigen::VectorXd v,std::vector<ponto> & scanOrigem, std::vector<ponto
     double erro=0.0;
     int numPontos = scanOrigem.size();
     for (size_t i = 0; i < numPontos; i++){
-        erro += (scanDestino[i] - (p+scanOrigem[i])).norma();
+        erro += (scanDestino[i] - (p + scanOrigem[i])).quadradoNorma();
     }
     //std::cout << "\nerro = " << erro << std::endl;
     return erro/((double)numPontos);
@@ -102,7 +102,7 @@ double fobj(Eigen::VectorXd v,std::vector<ponto> & scanOrigem, std::vector<ponto
 
 inline double fRestricaoPadrao(Eigen::VectorXd v)
 {
-    return 0.0;//se a restricao nao-linear nao foi fornecida...usa um "placeholder"
+    return v.squaredNorm();//se a restricao nao-linear nao foi fornecida...usa um "placeholder"
 }
 
 pose psoScanMatch(std::vector<ponto> & scanOrigem, std::vector<ponto> & scanDestino,double estimativaInicial[3]) throw(std::domain_error)
@@ -169,17 +169,17 @@ pose psoScanMatch(std::vector<ponto>& scanOrigem, std::vector<ponto>& scanDestin
     using namespace std::placeholders;
     Eigen::VectorXd x;// = Eigen::VectorXd::Zero(3, 1);
     opcoesPSO opcoes;
-    opcoes.coefCognitivo = 0.7;
+    opcoes.coefCognitivo = 0.9;
     opcoes.coefInercia = 0.9;
     opcoes.coefSocial = 0.7;
     opcoes.limitaVelocidade = true;
-    opcoes.maxIter = 100;
+    opcoes.maxIter = 50;
     opcoes.numDimensoes = 3;
     opcoes.modoDeConfinamento = BLOQUEIO;
     opcoes.normalizaValores = false;
-    opcoes.numParticulas = 50;
+    opcoes.numParticulas = 25;
     opcoes.velMax = 0.5;
-    opcoes.tolerancia = 0.1;
+    opcoes.tolerancia = 1;
 	//cria estimativa inicial...
 	//TransformType RT = icpSVD(converte_ponto_vector(scanOrigem), converte_ponto_vector(scanDestino));
 	//transformTypeToDouble(RT, estimativaInicial);
