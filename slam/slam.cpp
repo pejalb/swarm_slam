@@ -1,8 +1,17 @@
 #include "slam.h"
+#define TESTE_CSV_ 1
+#include "constantes.h"
 #include <fstream>
 #include <iostream>
 #include <cmath>
 #include <Eigen/SparseCholesky>
+
+inline void transforma_vetor_pontos(std::vector<ponto>& scan, pose &p)
+{
+    for (int i = 0; i < scan.size(); i++) {
+        scan[i] = p + scan[i];
+    }
+}
 
 inline ponto slam::paraCoordenadasMapa(double x, double y)
 {
@@ -20,16 +29,41 @@ inline void slam::paraCoordenadasMapaVector(std::vector<ponto> &scan)
 		paraCoordenadasMapa(*i);
 	}
 }
+void slam::estimaVelocidade(int numPoses)
+{
+    //estima a velocidade do sistema baseado em suas ultimas numPose poses
+    double vx=0.0, vy = 0.0 , w = 0.0;
+    pose dp;
+    for (int i = numPoses; poses.size()>numPoses && i >0; i--) {
+        dp = poses.rbegin()[i] - poses.rbegin()[i-1];
+        vx +=  dp.x;
+        vy += dp.y;
+        w += dp.angulo;
+    }
+    vx /= (double)numPoses ;
+    vy /= (double)numPoses;
+    w /= (double)numPoses;
+    vel = pose(vx,vy,w);
+}
+pose slam::estimaProximaPose(void)
+{
+    estimaVelocidade();
+    if (!std::isinf(vel.x) && !std::isinf(vel.y), !std::isinf(vel.angulo))
+        return poses.rbegin()[0] + vel;
+    else
+        return poses.rbegin()[0];
+}
 slam::slam()
 {
     guardaScans = false;
+    origem = pose();
     mapa = new gridMap();
 }
 
 slam::slam(int linhas, int colunas, double tamanhoCelula,bool guardaScans, bool usaLogOdds, double probPrior, double probOcc, double probFree)
 {
     try {
-        mapa = new gridMap(linhas, colunas, usaLogOdds, probPrior, probOcc, probFree);//inclua captura de excecao!!!!
+        mapa = new gridMap(linhas, colunas, probPrior, probOcc);//inclua captura de excecao!!!!
     }
     catch (std::bad_alloc)
     {
@@ -40,17 +74,21 @@ slam::slam(int linhas, int colunas, double tamanhoCelula,bool guardaScans, bool 
     this->tamanhoCelula = tamanhoCelula;
     this->guardaScans = guardaScans;
     poses.reserve(NUM_MINIMO_POSES);
-    poses.push_back(pose(linhas/2, colunas/2, 0));
+    poses.push_back(pose(0.0, 0.0, 0.0));
+    origem = pose(linhas / 2, linhas / 2, 0);
     scans.reserve(NUM_MINIMO_POSES);
     //cria arquivo para armazenamento de poses
     std::ofstream arqPoses;
     arqPoses.open("poses", std::ios::out | std::ios::trunc);
+    arqPoses << "x,y,angulo,\n";
+    arqPoses << poses.back().x<< "," << poses.back().y << "," << poses.back().angulo << std::endl;
+    arqPoses.close();
 }
 
 slam::~slam()
 {
-    this->corrige();
-    this->mapa->gravaMapa("mapaFinal");
+    //this->corrige();
+    this->mapa->salva("mapaFinal");
     delete mapa;
 }
 
@@ -97,13 +135,13 @@ void slam::corrige()
     poses.clear();
     std::ofstream arqPoses; arqPoses.open("poses", std::ios::out | std::ios::trunc);
     arqPoses << "\nx,y,angulo,\n";
-    poses.push_back(pose(mapa->tamanhoHorizontal() / 2, mapa->tamanhoVertical() / 2, 0));
+    poses.push_back(pose(mapa->maxLinhas / 2, mapa->maxColunas / 2, 0));
     for (i = 1; i < scans.size(); i++) {
         poses.push_back(poses[i-1]+pose(x(i), y(i), ang(i)));
         arqPoses << poses[i].x << "," << poses[i].y << "," << poses[i].angulo << std::endl;
     }
     arqPoses.close();
-    this->mapa->reset();
+    this->mapa->limpa();
    // int i;
     i=0;
     for (std::vector<std::vector<ponto> >::iterator sc = scans.begin(); sc != scans.end(); sc++) {
@@ -114,38 +152,56 @@ void slam::corrige()
     }
 }
 
-void slam::atualiza(std::vector<ponto> scan)
+void slam::atualiza(std::vector<ponto> scan,bool usaOdometria, double odoX,double odoY,double odoAng)
 {
+    paraCoordenadasMapaVector(scan);
+    pose p,estimada;
     if (guardaScans)
         scans.push_back(scan);//sem correcao, possibilitando refinamentos sucessivos, se desejado
-    paraCoordenadasMapaVector(scan);
-    pose atual = (poses.rbegin())[0];
-    double estimativa[3] = { atual.x,atual.y,atual.angulo };
-    pose p;
-    try {
-        p = psoScanMatch(scan, scans.rbegin()[0], estimativa);
-        //p = psoScanMatch(scan, scans.rbegin()[0], estimativa,
-            //poses, fRestricaoPoses);
-    }
-    catch (const std::exception&) {
-        scans.pop_back();
-        return;
-    }
-    //se chegou aqui nao houve excecao
-    //p += atual;
-    //monta o sistema linear aproximado
+    if (scans.size() > 1) {
+        pose atual = (poses.rbegin())[0];
+        double estimativaInicial[3] = { 0.0,0.0,0.0 };
+        //estimada = estimaProximaPose();
+        double estimativa[3];
+        if (usaOdometria) {
+            estimativa[0] = odoX;
+            estimativa[1] = odoY;
+            estimativa[2] = odoAng;
+        }
+        else {
+            estimativa[0] = estimada.x;
+            estimativa[1] = estimada.y;
+            estimativa[2] = estimada.angulo;
+        }
+        try {
+            p = psoScanMatch(scans.rbegin()[1], scan, estimativaInicial,mapa);
+            //p = psoScanMatch(scan, scans.rbegin()[0], estimativa,
+                //poses, fRestricaoPoses);
+        }
+        catch (const std::exception&) {
+            scans.pop_back();
+            return;
+        }
+        //se chegou aqui nao houve excecao
+        //p += atual;
+        //monta o sistema linear aproximado
 
-    poses.push_back(p);
+        // poses.push_back(pose(0.5*p.x + 0.5*estimada.x, 0.5*p.y + 0.5*estimada.y, 0.5*p.angulo + 0.5*estimada.angulo));
+        poses.push_back(pose(p.x, p.y,p.angulo));
+        p = (poses.rbegin())[0];
+    }
+    else
+        p = (poses.rbegin())[0];// p.x /= tamanhoCelula; p.y /= tamanhoCelula;
     // int i;
     std::vector<ponto>::iterator it = scan.begin();
-    for (it = scan.begin(); it != scan.end(); it++) {
-        ponto corrigido = (p + (*it));
-        mapa->marcaLinha(std::round(p.x), std::round(p.y), std::round(corrigido.x), std::round(corrigido.y));
+    transforma_vetor_pontos(scan, origem + p);
+    for (it = scan.begin(); it != scan.end(); it++) {        
+        //std::cout << "\nALCANCE = " << MAX_ALCANCE;
+        if (it->norma() <= 10*MAX_ALCANCE) {
+            mapa->marcaLinha(p.x, p.y, it->x, it->y);
+        }
     }
     std::ofstream arqPoses; arqPoses.open("poses", std::ios::out | std::ios::app);
-    if (poses.size() == 1) {
-        arqPoses << "\nx,y,angulo,\n";
-    }
     arqPoses << poses.back().x << "," << poses.back().y << "," << poses.back().angulo << std::endl;
     //std::cout << poses.back().x << "," << poses.back().y << "," << poses.back().angulo << std::endl;
     arqPoses.close();
@@ -158,7 +214,14 @@ void slam::atualiza(std::vector<ponto> scan)
     }*/
     /*arqScansX.close();*/
     //arqScansY.close();
-
-    //mapa->gravaMapaSeq("mapa");
+    //if (scans.size()%100==0)//imprime um em cada 100 mapas
+    /*
+    static int numScans = 0;    
+    if (numScans % 200==0) {
+        char s[80];
+        std::sprintf(s, "mapa%d", numScans);
+        mapa->salva(s);
+    }
+    numScans++;*/
 }
 

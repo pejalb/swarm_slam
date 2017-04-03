@@ -27,7 +27,7 @@ double pso_gbest(VectorXd &x, std::function<double(Eigen::VectorXd)> fobj, opcoe
 
 	MatrixXd velocidades(opcoes.numParticulas, opcoes.numDimensoes); //(MatrixXd::Random(opcoes.numParticulas, opcoes.numDimensoes))*opcoes.velMax;//[-velMax,velMax]
 	//velocidades.setRandom();
-	velocidades.setZero();//tentativa de descobrir onde comecam os -nan(ind)
+	velocidades.setRandom();//tentativa de descobrir onde comecam os -nan(ind)
 	//velocidades *= opcoes.velMax;
     //cria matrizes de update
     //MatrixXd inercia = MatrixXd::Identity(opcoes.numDimensoes, opcoes.numDimensoes)*op;
@@ -143,8 +143,8 @@ double pso_gbest(VectorXd &x, std::function<double(Eigen::VectorXd)> fobj, opcoe
 				estagnacao = maxIterEstagnado;//quebrou-se a estagnacao...reinicie a contagem
            // std::cout << "\niter" << iter << " gbest = " << apt ;//debugging
         }        
-    x = posicoes.row(idxGbest);    
-    apt = melhoresAptidoes[idxGbest];
+    x = gbest;
+    apt = gbestApt;
 //    delete[] melhoresAptidoes;
   //  delete[] faixasDeValores;
     if (std::isnormal(apt))//cuidado com zero (seria ideal...)!!!

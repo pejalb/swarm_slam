@@ -1,6 +1,7 @@
-#define TESTE_SLAM_BASE_
+#define TESTE_SLAM_BASE_ 1
 #define TESTE_CSV_ 1
 #include "slam.h"
+#include "constantes.h"
 #include <cstdlib>
 #include <vector>
 #include <iostream>
@@ -9,7 +10,6 @@
 #include <string>
 #include <sstream>
 #include <iterator>
-#include "constantes.h"
 #include <algorithm>
 
 
@@ -92,7 +92,9 @@ void paraCoordenadasCartesianas(std::vector < std::vector<double> > polarScans, 
 
 int main()
 {
-	slam s(1000, 1000, ESCALA); 
+    //std::cout << "\nEscala = " << ESCALA;
+	//slam s(1000, 1000, ESCALA); 
+    slam s(1000, 1000, ESCALA, true, true, 0.5, 0.9);
 	//teste de funcionamento...
 	auto tmp = leScansCSV("mit-csail.csv");
 	if(TESTE_CSV_) {
@@ -101,8 +103,11 @@ int main()
 		int i = 0;
 		for (i = 0; i < leituras.size(); i++) {
 			std::cout << "\nIteracao " << i;
-			s.atualiza(leituras.at(i));
-            //if (i % 100 == 0 && i > 0)
+            //for (int j = 0; j < 5; j++)
+            //{
+                s.atualiza(leituras.at(i));
+            //}
+            //if (i % 50 == 0 && i > 0)
                // s.corrige();
 		}
 	}
