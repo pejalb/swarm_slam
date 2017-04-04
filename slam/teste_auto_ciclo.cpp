@@ -10,11 +10,14 @@
 #include <Eigen/StdVector>
 #include <cmath>
 #include "slam.h"
-#define TESTE_CSV_
+#define TESTE_CSV_ 0
 #include "constantes.h"
+#include <thread>
+#include <functional>
 
 int main(int argc, char **argv)
 {
+    using namespace std::placeholders;
     Aria::init();
     //ArLog::init(ArLog::StdOut, ArLog::Verbose);
     ArArgumentParser parser(&argc, argv);
@@ -24,9 +27,10 @@ int main(int argc, char **argv)
     ArAnalogGyro gyro(&robot);
     std::vector<ponto > leituras;
     leituras.reserve(LEITURAS_POR_SCAN);
-    const double ESCALA = 500.0;
+    //const double ESCALA = 500.0;
     const unsigned int numLinhas = 1000;
     const unsigned int numColunas = 1000;
+    const double fatorGrauRad = M_PI/180.0;
     slam s(numLinhas, numColunas, ESCALA);
 	int conta;
 
@@ -103,9 +107,10 @@ int main(int argc, char **argv)
     std::list<ArPoseWithTime*>::iterator it;
     std::list<ArSensorReading*>::const_iterator itR;
     ArLog::log(ArLog::Normal, "Inicio movimento");/*O movimento só começa de fato quando o robo for destravado e houver uma velocidade não nula aplicada a cada roda*/
-	robot.setCycleTime(350);//pode nao compilar
+	robot.setCycleTime(500);//pode nao compilar
     ArModeTeleop teleop(&robot, "teleop", 't', 'T');/*Modo de teleoperação, tal qual utilizado pelo demo*/
     // activate the default mode
+
     teleop.activate();
 
     // turn on the motors
@@ -137,26 +142,36 @@ int main(int argc, char **argv)
 		//ArTransform transformacao;
 		//transformacao.setTransform()
 		conta = 0;
+		//double odoX = (*itR)->getXTaken()/ESCALA;
+		//double odoY = (*itR)->getYTaken()/ESCALA;
+		//double odoTH = (*itR)->getThTaken();
+		
+		dumpLaser << "\n";
 	    for (itR = rawReadings->begin(); itR != rawReadings->end(); ++itR)/*Varre as leituras em sequência da direita para a esquerda*/
 	    {
 			ArPose posRobo = (*itR)->getPose();/*Pose fornecida pela biblioteca Aria*/
-	        dumpLaser << (*itR)->getSensorTh()-robot.getTh() << "," << (*itR)->getRange() << "," << posRobo.getX() << "," << posRobo.getY() << "," << robot.getX() << "," << robot.getY() << "\n";
+			(*itR)->getAdjusted();
+	        dumpLaser << (*itR)->getRange() <<",";
             contador++;
+	    
             leituras.push_back(ponto((*itR)->getLocalX()/ESCALA, (*itR)->getLocalY()/ESCALA));
 	    }
-        s.atualiza(leituras);
+        s.atualiza(leituras,true,(*itR)->getXTaken()/ESCALA,(*itR)->getYTaken()/ESCALA,(*itR)->getThTaken()*fatorGrauRad);
+	
+	
         leituras.clear();
         laser->unlockDevice();	/*destrava o laser até a próxima tentativa de leitura*/
 	}	
-
+	salvaWrapper(&s,"mapa");
 	if(numLasers == 0)/*Não foi possível conectar ao laser*/
 		ArLog::log(ArLog::Normal, "Nenhum laser detectado.");
 	else
 			//ArLog::log(ArLog::Normal, "");
 
 			//0,1 segundos para prox leitura
-		robot.unlock();
-  		ArUtil::sleep(1000);/*Intervalo entre as leituras*/
+		robot.unlock();	
+  		ArUtil::sleep(1500);/*Intervalo entre as leituras*/
+		
     }
     dumpLaser.close();/*Fecha o stream de leitura*/
 	/*...........................................................................................................................................*/

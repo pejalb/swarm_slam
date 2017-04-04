@@ -24,7 +24,7 @@ class gridMap {
         ~gridMap();
         //operadores
         double &operator()(int linha, int coluna);
-        double operator- (gridMap & rhs);
+        double operator- (const gridMap&  rhs);
         double operator-(std::vector<ponto> &scans);
         //limpa mapa
         void limpa(void);

@@ -1,0 +1,2 @@
+ 
+g++ -fPIC -g -I/usr/local/Aria/include -I../eigen/ gridMap.h gridMap.cpp ponto.h ponto.cpp pose.h pose.cpp pso.h pso.cpp scanMatch.h scanMatch.cpp slam.h slam.cpp constantes.h main.cpp -L/usr/local/Aria/lib -lAria -lpthread -ldl -lrt -std=c++11 -lstdc++  -DCMAKE_CXX_FLAGS=-D_GLIBCXX_USE_CXX11_ABI=0 -fpermissive

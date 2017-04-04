@@ -115,7 +115,7 @@ double & gridMap::operator()(int linha, int coluna)
     return mapa(linha, coluna);
 }
 
-double gridMap::operator-(gridMap & rhs)
+double gridMap::operator-(const gridMap &rhs)
 {
     return (this->mapa - rhs.mapa).norm();
 }

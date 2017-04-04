@@ -5,8 +5,10 @@
 #include <iostream>
 #include <cmath>
 #include <Eigen/SparseCholesky>
+#include <functional>
+#include <thread>
 
-inline void transforma_vetor_pontos(std::vector<ponto>& scan, pose &p)
+inline void transforma_vetor_pontos(std::vector<ponto>& scan,const pose &p)
 {
     for (int i = 0; i < scan.size(); i++) {
         scan[i] = p + scan[i];
@@ -151,7 +153,10 @@ void slam::corrige()
         }
     }
 }
-
+void salvaWrapper (slam *s,char nome[80])
+{
+    s->mapa->salva(nome);
+}
 void slam::atualiza(std::vector<ponto> scan,bool usaOdometria, double odoX,double odoY,double odoAng)
 {
     paraCoordenadasMapaVector(scan);
@@ -187,11 +192,18 @@ void slam::atualiza(std::vector<ponto> scan,bool usaOdometria, double odoX,doubl
         //monta o sistema linear aproximado
 
         // poses.push_back(pose(0.5*p.x + 0.5*estimada.x, 0.5*p.y + 0.5*estimada.y, 0.5*p.angulo + 0.5*estimada.angulo));
-        poses.push_back(pose(p.x, p.y,p.angulo));
+        if (usaOdometria) {
+            estimativa[0] = odoX+p.x;
+            estimativa[1] = odoY+p.y;
+            estimativa[2] = odoAng+p.angulo;
+	    
+        }
+        poses.push_back(pose(estimativa[0], estimativa[1],estimativa[2]));
         p = (poses.rbegin())[0];
     }
     else
         p = (poses.rbegin())[0];// p.x /= tamanhoCelula; p.y /= tamanhoCelula;
+    
     // int i;
     std::vector<ponto>::iterator it = scan.begin();
     transforma_vetor_pontos(scan, origem + p);
@@ -201,6 +213,15 @@ void slam::atualiza(std::vector<ponto> scan,bool usaOdometria, double odoX,doubl
             mapa->marcaLinha(p.x, p.y, it->x, it->y);
         }
     }
+    //static int numScans = 0;   
+    //if (numScans % 10==0) {
+       // char s[80];
+      //  std::sprintf(s, "mapa%d", numScans++);
+	//std::function<void(char *)> gravaMapa =
+        //    std::bind(mapa->salva, s );
+        //mapa->salva(s);
+    //}
+    
     std::ofstream arqPoses; arqPoses.open("poses", std::ios::out | std::ios::app);
     arqPoses << poses.back().x << "," << poses.back().y << "," << poses.back().angulo << std::endl;
     //std::cout << poses.back().x << "," << poses.back().y << "," << poses.back().angulo << std::endl;
@@ -215,13 +236,7 @@ void slam::atualiza(std::vector<ponto> scan,bool usaOdometria, double odoX,doubl
     /*arqScansX.close();*/
     //arqScansY.close();
     //if (scans.size()%100==0)//imprime um em cada 100 mapas
-    /*
-    static int numScans = 0;    
-    if (numScans % 200==0) {
-        char s[80];
-        std::sprintf(s, "mapa%d", numScans);
-        mapa->salva(s);
-    }
-    numScans++;*/
+    
+    
 }
 

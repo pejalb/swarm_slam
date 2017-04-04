@@ -32,5 +32,7 @@ class slam {
         void atualiza(std::vector<ponto> scan, bool usaOdometria = false,
             double odoX=0.0, double odoY=0.0, double odoAng=0.0);//atualiza a pose com um novo scan
         void corrige(void);//calcula poses etc, mas nao atualiza o mapa
+	friend void salvaWrapper (slam *s,char nome[80]);
 };
+void salvaWrapper (slam *s,char nome[80]);
 #endif
