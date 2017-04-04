@@ -31,6 +31,7 @@ int main(int argc, char **argv)
     const unsigned int numLinhas = 1000;
     const unsigned int numColunas = 1000;
     const double fatorGrauRad = M_PI/180.0;
+    
     slam s(numLinhas, numColunas, ESCALA);
 	int conta;
 
@@ -100,9 +101,11 @@ int main(int argc, char **argv)
     std::string nome = std::string("dump") + hora;    
     const char* cNome = nome.c_str();
     std::ofstream dumpLaser;/*Stream de caracteres para armazenar os valores lidos pelo Laser*/
+    nome = std::string("dumpPoses") + hora;
     dumpLaser.open(cNome, std::ios::out | std::ios::app);//abre stream
     dumpLaser << "Inicio leitura (formato: numLeitura541, angulo, distanciaLaser, X laser, Y laser, X roboGlobal, Y roboGlobal)\n"; 
-
+    std::ofstream dumpPoses;
+    dumpPoses.open(nome.c_str(), std::ios::out | std::ios::app);
     ArLog::log(ArLog::Normal, "Iniciando Laser Scan");
     std::list<ArPoseWithTime*>::iterator it;
     std::list<ArSensorReading*>::const_iterator itR;
@@ -112,7 +115,6 @@ int main(int argc, char **argv)
     // activate the default mode
 
     teleop.activate();
-
     // turn on the motors
     robot.comInt(ArCommands::ENABLE, 1);/*Permite controlar diretamente por meio de um dispositivo como um joystick ou teclado*/
 	/*FINAL DA INICIALIZAÇÃO*/
@@ -139,8 +141,6 @@ int main(int argc, char **argv)
 	    std::list<ArPoseWithTime*> *currentReadings = laser->getCurrentBuffer(); //X,Y e atributos
 	    const std::list<ArSensorReading*> *rawReadings = laser->getRawReadings();
 		/*Leituras não processadas são lidas abaixo*/
-		//ArTransform transformacao;
-		//transformacao.setTransform()
 		conta = 0;
 		//double odoX = (*itR)->getXTaken()/ESCALA;
 		//double odoY = (*itR)->getYTaken()/ESCALA;
@@ -156,8 +156,9 @@ int main(int argc, char **argv)
 	    
             leituras.push_back(ponto((*itR)->getLocalX()/ESCALA, (*itR)->getLocalY()/ESCALA));
 	    }
+	    dumpPoses << posRobo.getX()<<","<<posRobo.getY()<<","<<(*itR)->getThRad() <<std::endl;
         s.atualiza(leituras,true,(*itR)->getXTaken()/ESCALA,(*itR)->getYTaken()/ESCALA,(*itR)->getThTaken()*fatorGrauRad);
-	
+	//dumpPoses << (*itR)->getXTaken()/ESCALA,(*itR)->getYTaken()/ESCALA,(*itR)->getThTaken()*fatorGrauRad <<std::endl;
 	
         leituras.clear();
         laser->unlockDevice();	/*destrava o laser até a próxima tentativa de leitura*/
@@ -174,6 +175,7 @@ int main(int argc, char **argv)
 		
     }
     dumpLaser.close();/*Fecha o stream de leitura*/
+    dumpPoses.close();
 	/*...........................................................................................................................................*/
 
 	/*...........................................................................................................................................*/
