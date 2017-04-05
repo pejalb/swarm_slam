@@ -1,5 +1,6 @@
 #define TESTE_SLAM_BASE_ 1
 #define TESTE_CSV_ 1
+#define TESTE_MOBILE_SIM_ 1
 #include "slam.h"
 #include "constantes.h"
 #include <cstdlib>
@@ -96,7 +97,11 @@ int main()
 	//slam s(1000, 1000, ESCALA); 
     slam s(1000, 1000, ESCALA, true, true, 0.5, 0.9);
 	//teste de funcionamento...
+#if TESTE_MOBILE_SIM_==1
+    auto tmp = leScansCSV("dump04_04_2017 09_04_14.csv",181);
+#else
 	auto tmp = leScansCSV("mit-csail.csv");
+#endif
 	if(TESTE_CSV_) {
 		std::vector <std::vector<ponto> > leituras; leituras.reserve(tmp.size());
 		paraCoordenadasCartesianas(tmp,leituras, ESPACO_ANG, MEIO_ESPACO_ANG);
@@ -118,6 +123,5 @@ int main()
 			s.atualiza(cria_scan_de_teste());
 		}
 	}	
-	system("pause");
     return 0;
 }

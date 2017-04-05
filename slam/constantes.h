@@ -22,6 +22,8 @@
 #define A_90_GRAUS (1.570796326794897)
 #endif
 
+
+
 #ifdef PSO_
 #define SEED_PADRAO (0)
 #endif
@@ -57,6 +59,15 @@
 #define MAX_ALCANCE 20000
 #endif // TESTE_CSV==1
 
+#if TESTE_MOBILE_SIM_ == 1
+#define ESCALA 1000
+#define ESPACO_ANG A_180_GRAUS
+#define MEIO_ESPACO_ANG A_90_GRAUS
+#define LEITURAS_POR_SCAN (181)
+#define NUM_MINIMO_POSES (700)
+#define MAX_ALCANCE 20000
+#endif
+  
 #endif
 
 

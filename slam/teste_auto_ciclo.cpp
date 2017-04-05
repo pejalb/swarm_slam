@@ -156,7 +156,7 @@ int main(int argc, char **argv)
 	    
             leituras.push_back(ponto((*itR)->getLocalX()/ESCALA, (*itR)->getLocalY()/ESCALA));
 	    }
-	    dumpPoses << posRobo.getX()<<","<<posRobo.getY()<<","<<(*itR)->getThRad() <<std::endl;
+	    dumpPoses << (*itR)->getPose().getX()<<","<<(*itR)->getPose().getX()<<","<<(*itR)->getThTaken()*fatorGrauRad<<std::endl;
         s.atualiza(leituras,true,(*itR)->getXTaken()/ESCALA,(*itR)->getYTaken()/ESCALA,(*itR)->getThTaken()*fatorGrauRad);
 	//dumpPoses << (*itR)->getXTaken()/ESCALA,(*itR)->getYTaken()/ESCALA,(*itR)->getThTaken()*fatorGrauRad <<std::endl;
 	

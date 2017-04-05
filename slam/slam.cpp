@@ -194,6 +194,7 @@ void slam::atualiza(std::vector<ponto> scan,bool usaOdometria, double odoX,doubl
         // poses.push_back(pose(0.5*p.x + 0.5*estimada.x, 0.5*p.y + 0.5*estimada.y, 0.5*p.angulo + 0.5*estimada.angulo));
         if (usaOdometria) {
             estimativa[0] = odoX+p.x;
+	    std::cout <<"\nodo X = "<<odoX<<", p.x = "<<p.x<<std::endl;
             estimativa[1] = odoY+p.y;
             estimativa[2] = odoAng+p.angulo;
 	    
@@ -213,14 +214,12 @@ void slam::atualiza(std::vector<ponto> scan,bool usaOdometria, double odoX,doubl
             mapa->marcaLinha(p.x, p.y, it->x, it->y);
         }
     }
-    //static int numScans = 0;   
-    //if (numScans % 10==0) {
-       // char s[80];
-      //  std::sprintf(s, "mapa%d", numScans++);
-	//std::function<void(char *)> gravaMapa =
-        //    std::bind(mapa->salva, s );
-        //mapa->salva(s);
-    //}
+    static int numScans = 0;   
+    if (numScans % 10==0) {
+        char s[80];
+        std::sprintf(s, "mapa%d", numScans++);
+        mapa->salva(s);
+    }
     
     std::ofstream arqPoses; arqPoses.open("poses", std::ios::out | std::ios::app);
     arqPoses << poses.back().x << "," << poses.back().y << "," << poses.back().angulo << std::endl;

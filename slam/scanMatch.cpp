@@ -178,7 +178,7 @@ pose psoScanMatch(std::vector<ponto> & scanOrigem, std::vector<ponto> & scanDest
     //std::function<double(Eigen::VectorXd)> objetivo= 
     //    std::bind(fobj,_1,scanOrigem, scanDestino);//wrapper para a fobj, requer apenas a transformacao
     std::function<double(Eigen::VectorXd)> objetivo =
-            std::bind(fobjMelhorada,_1,scanOrigem, scanDestino,m);//wrapper para a fobj, requer apenas a transformacao
+            std::bind(fobj,_1,scanOrigem, scanDestino);//wrapper para a fobj, requer apenas a transformacao
     std::function<double(Eigen::VectorXd)> restricao = fRestricaoPadrao;
     double erro = pso_gbest(x, objetivo, opcoes, limiteInferior, limiteSuperior, restricao);
     if (erro < 0)
@@ -224,7 +224,7 @@ pose psoScanMatch(std::vector<ponto>& scanOrigem, std::vector<ponto>& scanDestin
     //std::function<double(Eigen::VectorXd)> objetivo =
     //    std::bind(fobj, _1, scanOrigem, scanDestino);//wrapper para a fobj, requer apenas a transformacao
     std::function<double(Eigen::VectorXd)> objetivo =
-        std::bind(fobjMelhorada, _1, scanOrigem, scanDestino, m);//wrapper para a fobj, requer apenas a transformacao
+        std::bind(fobj, _1, scanOrigem, scanDestino);//wrapper para a fobj, requer apenas a transformacao
     std::function<double(Eigen::VectorXd)> restricao =
             std::bind(fRestricao, _1,outrasPoses );
     double erro = pso_gbest(x, objetivo, opcoes, limiteInferior, limiteSuperior, restricao);
