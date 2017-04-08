@@ -3,6 +3,7 @@
 #include "ponto.h"
 #include <vector>
 
-bool detectaCanto(std::vector<ponto> scan, int inicio, int fim, ponto *canto, double tolerancia = 1e-3);
+bool detectaCanto(const std::vector<ponto>& scan, int inicio, int fim, int &idx, double tolerancia = 1e-3);
+
 
 #endif
