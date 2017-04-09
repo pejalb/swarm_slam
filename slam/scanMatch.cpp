@@ -6,7 +6,7 @@
 #include <functional>
 #include "pointcloud_kd_tree.h"
 #include <iostream>//debugging
-
+using namespace nanoflann;
 
 inline void transforma_vetor_pontos(std::vector<ponto>& scan, pose &p)
 {
@@ -98,11 +98,13 @@ double fobj(Eigen::VectorXd v,std::vector<ponto> & scanOrigem, std::vector<ponto
     
     PointCloud<double> cloud; cloud.pts = scanDestino;
     double query[2] = { scanOrigem[0].x,scanOrigem[0].y };
-    std::vector<size_t> idx=constroiKDtree<double>(cloud, query);
+    std::vector<std::vector<size_t> > idx=constroiKDtree<double>(cloud, scanOrigem,1);
     int numPontos = idx.size();
     double query_pt[2] = { 1.0,1.0 };
     for (size_t i = 0; i < numPontos; i+=1){
-        erro += (scanDestino[idx[i]] - (p + scanOrigem[0])).quadradoNorma();
+        for (size_t j = 0; j < idx[i].size(); j++){
+            erro += (scanDestino[idx[i][j]] - (p + scanOrigem[i])).quadradoNorma();
+        }        
     }
     //std::cout << "\nerro = " << erro << std::endl;
     return std::sqrt(erro/((double)numPontos));

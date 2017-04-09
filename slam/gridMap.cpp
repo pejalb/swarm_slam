@@ -48,6 +48,11 @@ bool gridMap::maiorLinhaPertencente(int &x1, int &y1, int &x2, int &y2)
     return false;//nao foi possivel...
 }
 
+void gridMap::aumentaMapa(void)
+{
+    mapa.resize(maxLinhas * 2, maxColunas * 2);
+}
+
 gridMap::gridMap() :maxLinhas(0),maxColunas(0)
 {
 }
@@ -82,10 +87,12 @@ void bresenham(int x1, int y1, int x2, int y2)
 }
 */
 
-gridMap::gridMap(int linhas, int colunas, double probPrior, double probOcc ) : maxLinhas(linhas), maxColunas(colunas)
+gridMap::gridMap(int linhas, int colunas, double probPrior, double probOcc ) 
 {
     //se nada foi definido...inicialize todos os valores com zero
     mapa.resize(maxLinhas, maxColunas);
+    maxLinhas = linhas;
+    maxColunas = colunas;
     if (probPrior != 0.5)
         mapa.setConstant(std::log(probPrior / (1 - probPrior)));
     else
@@ -94,10 +101,12 @@ gridMap::gridMap(int linhas, int colunas, double probPrior, double probOcc ) : m
     //decrementoFundamental = -incrementoFundamental;
 }
 
-gridMap::gridMap(int linhas, int colunas, std::vector<ponto>&scan, double probPrior , double probOcc ) : maxLinhas(linhas), maxColunas(colunas)
+gridMap::gridMap(int linhas, int colunas, std::vector<ponto>&scan, double probPrior , double probOcc )
 {
     //se nada foi definido...inicialize todos os valores com zero
     mapa.resize(maxLinhas, maxColunas);
+    maxLinhas = linhas;
+    maxColunas = colunas;
     if (probPrior != 0.5)
         mapa.setConstant(std::log(probPrior / (1 - probPrior)));
     else
@@ -159,6 +168,8 @@ inline bool gridMap::pertence(int x, int y)
 
 void gridMap::marcaLinha(int x1, int y1, int x2, int y2)
 {
+    if (!pertence(x1, y1) || !pertence(x2, y2))//experimental
+        this->aumentaMapa();
     if (maiorLinhaPertencente(x1, y1, x2, y2)) {
         int dx, dy, p, p2, xy2, x, y, xf, yf;
         dx = x2 - x1;

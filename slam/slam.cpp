@@ -160,7 +160,7 @@ void salvaWrapper (slam *s,char nome[80])
 void slam::atualiza(std::vector<ponto> scan,bool usaOdometria, double odoX,double odoY,double odoAng)
 {
     paraCoordenadasMapaVector(scan);
-    pose p,estimada;
+    pose p,estimada,anterior;
     if (guardaScans)
         scans.push_back(scan);//sem correcao, possibilitando refinamentos sucessivos, se desejado
     if (scans.size() > 1) {
@@ -201,6 +201,8 @@ void slam::atualiza(std::vector<ponto> scan,bool usaOdometria, double odoX,doubl
 	    
         }
         //p = pose(estimativa[0], estimativa[1], estimativa[2]);
+        anterior = poses.back();
+        p += anterior;
         poses.push_back(p);
         //p = (poses.rbegin())[0];
     }
@@ -210,6 +212,8 @@ void slam::atualiza(std::vector<ponto> scan,bool usaOdometria, double odoX,doubl
     // int i;
     std::vector<ponto>::iterator it = scan.begin();
     transforma_vetor_pontos(scan, origem + p);
+    scans.pop_back();
+    scans.push_back(scan);
     for (it = scan.begin(); it != scan.end(); it++) {        
         //std::cout << "\nALCANCE = " << MAX_ALCANCE;
         if (it->norma() <= 10*MAX_ALCANCE) {

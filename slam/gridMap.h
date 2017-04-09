@@ -13,8 +13,10 @@ class gridMap {
         */
         double incrementoFundamental;//, decrementoFundamental;
         bool maiorLinhaPertencente(int &x1, int &y1, int &x2, int &y2);
+        //EXPERIMENTAL!!
+        void aumentaMapa(void);        
     public:
-        const int maxLinhas, maxColunas;
+        int maxLinhas, maxColunas;//perigoso!!!
         //construtores
         gridMap();
         gridMap(int linhas, int colunas,double probPrior=0.5,double probOcc=0.9);

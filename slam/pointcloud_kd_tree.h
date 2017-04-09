@@ -5,6 +5,7 @@
 #include <ctime>
 #include <cstdlib>
 #include <iostream>
+#include <iterator>
 #include "ponto.h"
 
 using namespace std;
@@ -143,7 +144,7 @@ void kdtree_demo(const size_t N)
 }
 
 template <typename num_t>
-std::vector<size_t> constroiKDtree(PointCloud<num_t> &cloud, num_t query_pt[2], size_t num_results = 5)
+std::vector<std::vector<size_t> > constroiKDtree(PointCloud<num_t> &cloud, std::vector<ponto> &pontos, size_t num_results = 5)
 {
     // construct a kd-tree index:
     // typedef KDTreeSingleIndexAdaptor<
@@ -152,14 +153,8 @@ std::vector<size_t> constroiKDtree(PointCloud<num_t> &cloud, num_t query_pt[2], 
     //     2 /* dim */
     // > my_kd_tree_t;
 
-    static my_kd_tree_t   index(2 /*dim*/, cloud, KDTreeSingleIndexAdaptorParams(10 /* max leaf */));
+    my_kd_tree_t   index(2 /*dim*/, cloud, KDTreeSingleIndexAdaptorParams(10 /* max leaf */));
     index.buildIndex();
-
-#if 0
-    // Test resize of dataset and rebuild of index:
-    cloud.pts.resize(cloud.pts.size()*0.5);
-    index.buildIndex();
-#endif
 
     //const num_t query_pt[2] = { 1.0, 0.5 };
 
@@ -168,15 +163,23 @@ std::vector<size_t> constroiKDtree(PointCloud<num_t> &cloud, num_t query_pt[2], 
     // ----------------------------------------------------------------
     {
         //size_t num_results = 5;
+        std::vector<std::vector<size_t> >   ret_indexes; ret_indexes.reserve(pontos.size());
+        //garante espaco
         std::vector<size_t>   ret_index(num_results);
         std::vector<num_t> out_dist_sqr(num_results);
-
-        num_results = index.knnSearch(&query_pt[0], num_results, &ret_index[0], &out_dist_sqr[0]);
-
+        num_t query_pt[2];
+        for (int i = 0; i < pontos.size(); i++){
+            //ret_indexes[i].reserve(num_results);
+            query_pt[0] = pontos[i].x;
+            query_pt[1] = pontos[i].y;
+            num_results = index.knnSearch(&query_pt[0], num_results, &ret_index[0], &out_dist_sqr[0]);
+            ret_indexes.push_back(ret_index);
+        }
+        //num_results = index.knnSearch(&query_pt[0], num_results, &ret_index[0], &out_dist_sqr[0]);
         // In case of less points in the tree than requested:
         ret_index.resize(num_results);
         //out_dist_sqr.resize(num_results);
-        return ret_index;
+        return ret_indexes;
     }
 }
 #endif
