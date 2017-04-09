@@ -1,6 +1,6 @@
 #define TESTE_SLAM_BASE_ 1
 #define TESTE_CSV_ 1
-#define TESTE_MOBILE_SIM_ 1
+#define TESTE_MOBILE_SIM_ 0
 #include "slam.h"
 #include "constantes.h"
 #include <cstdlib>
@@ -95,7 +95,7 @@ int main()
 {
     //std::cout << "\nEscala = " << ESCALA;
 	//slam s(1000, 1000, ESCALA); 
-    slam s(1000, 1000, ESCALA, true, true, 0.5, 0.9);
+    slam s(100, 100, ESCALA, true, true, 0.5, 0.9);
 	//teste de funcionamento...
 #if TESTE_MOBILE_SIM_==1
     auto tmp = leScansCSV("dump04_04_2017 09_04_14.csv",181);

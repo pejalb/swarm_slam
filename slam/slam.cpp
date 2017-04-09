@@ -8,7 +8,7 @@
 #include <functional>
 #include <thread>
 
-inline void transforma_vetor_pontos(std::vector<ponto>& scan,const pose &p)
+inline void transforma_vetor_pontos(std::vector<ponto>& scan,pose &p)
 {
     for (int i = 0; i < scan.size(); i++) {
         scan[i] = p + scan[i];
@@ -180,6 +180,7 @@ void slam::atualiza(std::vector<ponto> scan,bool usaOdometria, double odoX,doubl
         }
         try {
             p = psoScanMatch(scans.rbegin()[1], scan, estimativaInicial,mapa);
+            poses.push_back(p);
             //p = psoScanMatch(scan, scans.rbegin()[0], estimativa,
                 //poses, fRestricaoPoses);
         }
@@ -199,8 +200,9 @@ void slam::atualiza(std::vector<ponto> scan,bool usaOdometria, double odoX,doubl
             estimativa[2] = odoAng+p.angulo;
 	    
         }
-        poses.push_back(pose(estimativa[0], estimativa[1],estimativa[2]));
-        p = (poses.rbegin())[0];
+        //p = pose(estimativa[0], estimativa[1], estimativa[2]);
+        poses.push_back(p);
+        //p = (poses.rbegin())[0];
     }
     else
         p = (poses.rbegin())[0];// p.x /= tamanhoCelula; p.y /= tamanhoCelula;

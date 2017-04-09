@@ -4,6 +4,7 @@
 #include <cstdarg>
 #include <exception>
 #include <functional>
+#include "pointcloud_kd_tree.h"
 #include <iostream>//debugging
 
 
@@ -94,9 +95,14 @@ double fobj(Eigen::VectorXd v,std::vector<ponto> & scanOrigem, std::vector<ponto
 	//std::cout << "\nv =" << v(0) << "," << v(1) << "," << v(2)<<std::endl;//debugging -nan(ind)
     pose p(v);
     double erro=0.0;
-    int numPontos = scanOrigem.size();
+    
+    PointCloud<double> cloud; cloud.pts = scanDestino;
+    double query[2] = { scanOrigem[0].x,scanOrigem[0].y };
+    std::vector<size_t> idx=constroiKDtree<double>(cloud, query);
+    int numPontos = idx.size();
+    double query_pt[2] = { 1.0,1.0 };
     for (size_t i = 0; i < numPontos; i+=1){
-        erro += (scanDestino[i] - (p + scanOrigem[i])).quadradoNorma();
+        erro += (scanDestino[idx[i]] - (p + scanOrigem[0])).quadradoNorma();
     }
     //std::cout << "\nerro = " << erro << std::endl;
     return std::sqrt(erro/((double)numPontos));
@@ -164,7 +170,7 @@ pose psoScanMatch(std::vector<ponto> & scanOrigem, std::vector<ponto> & scanDest
     double limiteSuperior[3] = { estimativaInicial[1] + estimativaSVD[0] + DY,estimativaInicial[1] + estimativaSVD[1] + DY,estimativaInicial[2] + D_ANG };
     //ponto center_src(0, 0);
     //ponto center_dst(0, 0);
-    int tamanho = scanOrigem.size();
+   // int tamanho = scanOrigem.size();
     //normaliza a nuvem de pontos
     //dados os centros a determinacao da translacao entre as nuvens e trivial.
     /*for (int i = 0; i<tamanho; ++i)
