@@ -77,7 +77,7 @@ slam::slam(int linhas, int colunas, double tamanhoCelula,bool guardaScans, bool 
     this->guardaScans = guardaScans;
     poses.reserve(NUM_MINIMO_POSES);
     poses.push_back(pose(0.0, 0.0, 0.0));
-    origem = pose(linhas / 2, linhas / 2, 0);
+    origem = pose(linhas / 2, linhas / 2, M_PI*0.5);
     scans.reserve(NUM_MINIMO_POSES);
     //cria arquivo para armazenamento de poses
     std::ofstream arqPoses;
@@ -169,8 +169,8 @@ void slam::atualiza(std::vector<ponto> scan,bool usaOdometria, double odoX,doubl
         //estimada = estimaProximaPose();
         double estimativa[3];
         if (usaOdometria) {
-            estimativa[0] = odoX;
-            estimativa[1] = odoY;
+            estimativa[0] = odoX/ESCALA;
+            estimativa[1] = odoY/ESCALA;
             estimativa[2] = odoAng;
         }
         else {
@@ -180,6 +180,7 @@ void slam::atualiza(std::vector<ponto> scan,bool usaOdometria, double odoX,doubl
         }
         try {
             p = psoScanMatch(scans.rbegin()[1], scan, estimativaInicial,mapa);
+            //p = psoScanMatch(scans.rbegin()[1], scan, estimativa, mapa);
             poses.push_back(p);
             //p = psoScanMatch(scan, scans.rbegin()[0], estimativa,
                 //poses, fRestricaoPoses);
@@ -211,12 +212,12 @@ void slam::atualiza(std::vector<ponto> scan,bool usaOdometria, double odoX,doubl
     
     // int i;
     std::vector<ponto>::iterator it = scan.begin();
-    transforma_vetor_pontos(scan, origem + p);
+    transforma_vetor_pontos(scan, p+origem);
     scans.pop_back();
     scans.push_back(scan);
     for (it = scan.begin(); it != scan.end(); it++) {        
         //std::cout << "\nALCANCE = " << MAX_ALCANCE;
-        if (it->norma() <= 10*MAX_ALCANCE) {
+        if (it->norma() <= MAX_ALCANCE) {
             mapa->marcaLinha(p.x, p.y, it->x, it->y);
         }
     }

@@ -95,7 +95,7 @@ int main()
 {
     //std::cout << "\nEscala = " << ESCALA;
 	//slam s(1000, 1000, ESCALA); 
-    slam s(10000, 10000, ESCALA, true, true, 0.5, 0.9);
+    slam s(5000, 5000, ESCALA, true, true, 0.5, 0.9);
 	//teste de funcionamento...
 #if TESTE_MOBILE_SIM_==1
     auto tmp = leScansCSV("dump04_04_2017 09_04_14.csv",181);
@@ -113,7 +113,7 @@ int main()
                 s.atualiza(leituras.at(i));
             //}
             //if (i % 50 == 0 && i > 0)
-               // s.corrige();
+                //s.corrige();
 		}
 	}
 	else {

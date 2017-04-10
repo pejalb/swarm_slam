@@ -33,20 +33,21 @@
 #define DY 1.0
 #define D_ANG 0.25*M_PI
 #define ERRO_CELULA_MAPA_INICIAL 0.5;
+#define ERRO_MAXIMO 100
 #endif
 
 #ifdef SLAM_
 //constantes inerentes ao problema
 
 #if TESTE_CSV_ == 1//caso seja um teste com arquivo csv de leituras 
-#define ESCALA (0.2)
+#define ESCALA (0.05)
 #define ESPACO_ANG A_180_GRAUS
 #define MEIO_ESPACO_ANG A_90_GRAUS
 #define LEITURAS_POR_SCAN (361)
 //numero minimo de poses cujo armazenamento e garantido
 #define NUM_MINIMO_POSES (700)
 #define SCANS_DE_TESTE (0)
-#define MAX_ALCANCE 25.0
+#define MAX_ALCANCE 25.0/ESCALA
 #else //caso se trate de um ensaio rodando onboard no p3dx
 #define ESCALA 100.0
 #define ESPACO_ANG A_270_GRAUS
@@ -56,7 +57,7 @@
 #define LEITURAS_POR_SCAN (541) //para aria 541 leituras por scan
 //numero minimo de poses cujo armazenamento e garantido
 #define NUM_MINIMO_POSES (600)
-#define MAX_ALCANCE 20000
+#define MAX_ALCANCE 20000/ESCALA
 #endif // TESTE_CSV==1
 
 #if TESTE_MOBILE_SIM_ == 1
@@ -65,7 +66,7 @@
 #define MEIO_ESPACO_ANG A_90_GRAUS
 #define LEITURAS_POR_SCAN (181)
 #define NUM_MINIMO_POSES (700)
-#define MAX_ALCANCE 20000
+#define MAX_ALCANCE 20000/ESCALA
 #endif
   
 #endif

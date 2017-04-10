@@ -117,9 +117,13 @@ double fobjMelhorada(Eigen::VectorXd v, std::vector<ponto> & scanOrigem, std::ve
     int maxLin = m->maxLinhas /10;
     int maxCol = m->maxColunas /10;
     transforma_vetor_pontos(scanOrigem, p);
-    double erro = (gridMap(maxLin, maxCol, scanDestino) - gridMap(maxLin, maxCol, scanOrigem));
+    double erro =fobj(v,scanOrigem,scanDestino);
+    double diffMapa = 0.0;
+    for (size_t i = 0; i < scanDestino.size(); i++){
+        diffMapa -= m->leMapa(std::round(scanOrigem[i].x), std::round(scanOrigem[i].y));
+    }
     //std::cout << "\nerro = " << erro << std::endl;
-    return std::sqrt(erro / ((double)numPontos));
+    return std::sqrt(erro / ((double)numPontos))*diffMapa;
 }
 
 inline double fRestricaoPadrao(Eigen::VectorXd v)
@@ -149,12 +153,12 @@ pose psoScanMatch(std::vector<ponto> & scanOrigem, std::vector<ponto> & scanDest
     opcoes.coefInercia = 0.9;
     opcoes.coefSocial = 0.7;
     opcoes.limitaVelocidade = true;
-    opcoes.maxIter = 25;
+    opcoes.maxIter = 100;
     opcoes.numDimensoes = 3;
     opcoes.modoDeConfinamento = BLOQUEIO;
     opcoes.normalizaValores = false;
     double estimativaSVD[3];
-    opcoes.numParticulas = 25;
+    opcoes.numParticulas = 50;
     opcoes.velMax = 0.05;
     opcoes.tolerancia = 0.1;
 	//se desejado pode criar uma estimativa
@@ -186,9 +190,10 @@ pose psoScanMatch(std::vector<ponto> & scanOrigem, std::vector<ponto> & scanDest
     //std::function<double(Eigen::VectorXd)> objetivo= 
     //    std::bind(fobj,_1,scanOrigem, scanDestino);//wrapper para a fobj, requer apenas a transformacao
     std::function<double(Eigen::VectorXd)> objetivo =
-            std::bind(fobj,_1,scanOrigem, scanDestino);//wrapper para a fobj, requer apenas a transformacao
+            std::bind(fobjMelhorada,_1,scanOrigem, scanDestino,m);//wrapper para a fobj, requer apenas a transformacao
     std::function<double(Eigen::VectorXd)> restricao = fRestricaoPadrao;
     double erro = pso_gbest(x, objetivo, opcoes, limiteInferior, limiteSuperior, restricao);
+    std::cout << "\t erro = " << erro;
     if (erro < 0)
         throw (std::domain_error("\nO processo de otimizacao obteve um valor invalido!"));
     return pose(x);
@@ -204,11 +209,11 @@ pose psoScanMatch(std::vector<ponto>& scanOrigem, std::vector<ponto>& scanDestin
     opcoes.coefInercia = 0.9;
     opcoes.coefSocial = 0.7;
     opcoes.limitaVelocidade = true;
-    opcoes.maxIter = 50;
+    opcoes.maxIter = 100;
     opcoes.numDimensoes = 3;
     opcoes.modoDeConfinamento = BLOQUEIO;
     opcoes.normalizaValores = false;
-    opcoes.numParticulas = 25;
+    opcoes.numParticulas = 50;
     opcoes.velMax = 0.5;
     opcoes.tolerancia = 1;
 	//cria estimativa inicial...
@@ -232,11 +237,11 @@ pose psoScanMatch(std::vector<ponto>& scanOrigem, std::vector<ponto>& scanDestin
     //std::function<double(Eigen::VectorXd)> objetivo =
     //    std::bind(fobj, _1, scanOrigem, scanDestino);//wrapper para a fobj, requer apenas a transformacao
     std::function<double(Eigen::VectorXd)> objetivo =
-        std::bind(fobj, _1, scanOrigem, scanDestino);//wrapper para a fobj, requer apenas a transformacao
+        std::bind(fobjMelhorada, _1, scanOrigem, scanDestino,m);//wrapper para a fobj, requer apenas a transformacao
     std::function<double(Eigen::VectorXd)> restricao =
             std::bind(fRestricao, _1,outrasPoses );
     double erro = pso_gbest(x, objetivo, opcoes, limiteInferior, limiteSuperior, restricao);
-    //std::cout << "\n x = " << x(0) << " y = " << x(1) << " angulo = " << x(2) << std::endl;
+    std::cout << "\t erro = " << erro;
     if (erro < 0.0)
         throw(std::domain_error("\nO processo de otimizacao obteve um valor invalido!"));
     return pose(x);
