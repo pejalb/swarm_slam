@@ -106,6 +106,7 @@ int main(int argc, char **argv)
     dumpLaser << "Inicio leitura (formato: numLeitura541, angulo, distanciaLaser, X laser, Y laser, X roboGlobal, Y roboGlobal)\n"; 
     std::ofstream dumpPoses;
     dumpPoses.open(nome.c_str(), std::ios::out | std::ios::app);
+    std::ofstream dumpLinhas;dumpLinhas.open("linhas", std::ios::out | std::ios::app);
     ArLog::log(ArLog::Normal, "Iniciando Laser Scan");
     std::list<ArPoseWithTime*>::iterator it;
     std::list<ArSensorReading*>::const_iterator itR;
@@ -153,11 +154,15 @@ int main(int argc, char **argv)
 			(*itR)->getAdjusted();
 	        dumpLaser << (*itR)->getRange() <<",";
             contador++;
-	    
+	    if (contador <541)
+	     dumpLaser<<",";
             leituras.push_back(ponto((*itR)->getLocalX()/ESCALA, (*itR)->getLocalY()/ESCALA));
+	    //dumpLinhas<<(*itR)->getXTaken()/ESCALA<<","<<(*itR)->getYTaken()/ESCALA<<","<<(*itR)->getX()/ESCALA<<","<<(*itR)->getY()/ESCALA<<std::endl;
 	    }
+	    dumpLaser << "\n";
+	    
 	    dumpPoses << (*itR)->getPose().getX()<<","<<(*itR)->getPose().getX()<<","<<(*itR)->getThTaken()*fatorGrauRad<<std::endl;
-        s.atualiza(leituras,true,(*itR)->getXTaken()/ESCALA,(*itR)->getYTaken()/ESCALA,(*itR)->getThTaken()*fatorGrauRad);
+        s.atualiza(leituras,true,(*itR)->getXTaken(),(*itR)->getYTaken(),(*itR)->getThTaken()*fatorGrauRad,dumpLinhas);
 	//dumpPoses << (*itR)->getXTaken()/ESCALA,(*itR)->getYTaken()/ESCALA,(*itR)->getThTaken()*fatorGrauRad <<std::endl;
 	
         leituras.clear();
@@ -176,6 +181,7 @@ int main(int argc, char **argv)
     }
     dumpLaser.close();/*Fecha o stream de leitura*/
     dumpPoses.close();
+    dumpLinhas.close();
 	/*...........................................................................................................................................*/
 
 	/*...........................................................................................................................................*/

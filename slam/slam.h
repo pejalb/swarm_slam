@@ -29,8 +29,10 @@ class slam {
         slam(int linhas, int colunas,double tamanhoCelula,bool guardaScans=true,bool usaLogOdds = true, double probPrior = 0.5, double probOcc = 0.9, double probFree = 0.1);
         ~slam();//dtor padrao
         //atualizacao
-        void atualiza(std::vector<ponto> scan, bool usaOdometria = false,
-            double odoX=0.0, double odoY=0.0, double odoAng=0.0);//atualiza a pose com um novo scan
+	//void atualiza(std::vector<ponto> scan, bool usaOdometria = false,
+         //   double odoX=0.0, double odoY=0.0, double odoAng=0.0);
+        void atualiza(std::vector<ponto> scan, bool usaOdometria,
+            double odoX, double odoY, double odoAng,std::ofstream &linhas);//atualiza a pose com um novo scan
         void corrige(void);//calcula poses etc, mas nao atualiza o mapa
 	friend void salvaWrapper (slam *s,char nome[80]);
 };

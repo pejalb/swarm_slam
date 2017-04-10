@@ -1,11 +1,12 @@
 #ifndef _PONTO
 #define _PONTO
 #include <Eigen/Dense>
+
 class ponto {//define um ponto em 2d, num sistema cartesiano
     public:    
-       double x, y;
+       double x,y;
        ponto();
-       ponto(double x, double y);
+       ponto(double x,double y);
        ponto(const ponto &);
        ponto operator=(const ponto& rhs);
        ponto operator+(const ponto& rhs);//válido?

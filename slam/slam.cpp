@@ -8,7 +8,7 @@
 #include <functional>
 #include <thread>
 
-inline void transforma_vetor_pontos(std::vector<ponto>& scan,pose &p)
+inline void transforma_vetor_pontos(std::vector<ponto>& scan,const pose &p)
 {
     for (int i = 0; i < scan.size(); i++) {
         scan[i] = p + scan[i];
@@ -157,7 +157,7 @@ void salvaWrapper (slam *s,char nome[80])
 {
     s->mapa->salva(nome);
 }
-void slam::atualiza(std::vector<ponto> scan,bool usaOdometria, double odoX,double odoY,double odoAng)
+void slam::atualiza(std::vector<ponto> scan,bool usaOdometria, double odoX,double odoY,double odoAng,std::ofstream &linhas)
 {
     paraCoordenadasMapaVector(scan);
     pose p,estimada,anterior;
@@ -194,17 +194,12 @@ void slam::atualiza(std::vector<ponto> scan,bool usaOdometria, double odoX,doubl
         //monta o sistema linear aproximado
 
         // poses.push_back(pose(0.5*p.x + 0.5*estimada.x, 0.5*p.y + 0.5*estimada.y, 0.5*p.angulo + 0.5*estimada.angulo));
-        if (usaOdometria) {
-            estimativa[0] = odoX+p.x;
-	    std::cout <<"\nodo X = "<<odoX<<", p.x = "<<p.x<<std::endl;
-            estimativa[1] = odoY+p.y;
-            estimativa[2] = odoAng+p.angulo;
-	    
-        }
+        
         //p = pose(estimativa[0], estimativa[1], estimativa[2]);
         anterior = poses.back();
         p += anterior;
         poses.push_back(p);
+	
         //p = (poses.rbegin())[0];
     }
     else
@@ -218,6 +213,10 @@ void slam::atualiza(std::vector<ponto> scan,bool usaOdometria, double odoX,doubl
     for (it = scan.begin(); it != scan.end(); it++) {        
         //std::cout << "\nALCANCE = " << MAX_ALCANCE;
         if (it->norma() <= MAX_ALCANCE) {
+	  if (usaOdometria) {	
+	    p+=pose(odoX,odoY,odoAng);
+	    linhas<<p.x<<","<<p.y<<","<<it->x<<","<<it->y<<std::endl;
+	  }
             mapa->marcaLinha(p.x, p.y, it->x, it->y);
         }
     }
