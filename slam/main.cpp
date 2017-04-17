@@ -105,23 +105,24 @@ int main()
 	if(TESTE_CSV_) {
 		std::vector <std::vector<ponto> > leituras; leituras.reserve(tmp.size());
 		paraCoordenadasCartesianas(tmp,leituras, ESPACO_ANG, MEIO_ESPACO_ANG);
+		std::ofstream arqLinhas; arqLinhas.open("linhasSim", std::ios::trunc);
 		int i = 0;
 		for (i = 0; i < leituras.size(); i++) {
 			std::cout << "\nIteracao " << i;
             //for (int j = 0; j < 5; j++)
             //{
-                s.atualiza(leituras.at(i));
+                s.atualiza(leituras.at(i),false,0,0,0,arqLinhas);
             //}
             //if (i % 50 == 0 && i > 0)
                 //s.corrige();
 		}
 	}
-	else {
-		int i = 0;
-		for (i = 0; i < SCANS_DE_TESTE; i++){
-			std::cout << "\nIteracao " << i;
-			s.atualiza(cria_scan_de_teste());
-		}
-	}	
-    return 0;
+//	else {
+//		int i = 0;
+//		for (i = 0; i < SCANS_DE_TESTE; i++){
+//			std::cout << "\nIteracao " << i;
+//			s.atualiza(cria_scan_de_teste());
+//		}
+//	}	
+//    return 0;
 }
