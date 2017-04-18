@@ -8,7 +8,7 @@
 #include <functional>
 #include <thread>
 
-inline void transforma_vetor_pontos(std::vector<ponto>& scan,const pose &p)
+inline void transforma_vetor_pontos(std::vector<ponto>& scan, pose &p)
 {
     for (int i = 0; i < scan.size(); i++) {
         scan[i] = p + scan[i];
@@ -207,7 +207,8 @@ void slam::atualiza(std::vector<ponto> scan,bool usaOdometria, double odoX,doubl
     
     // int i;
     std::vector<ponto>::iterator it = scan.begin();
-    transforma_vetor_pontos(scan, p+origem);
+    transforma_vetor_pontos(scan, p);
+	//transforma_vetor_pontos(scan, p + origem);
     scans.pop_back();
     scans.push_back(scan);
     for (it = scan.begin(); it != scan.end(); it++) {        
