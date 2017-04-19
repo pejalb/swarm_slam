@@ -214,20 +214,19 @@ void slam::atualiza(std::vector<ponto> scan,bool usaOdometria, double odoX,doubl
     for (it = scan.begin(); it != scan.end(); it++) {        
         //std::cout << "\nALCANCE = " << MAX_ALCANCE;
         if (it->norma() <= MAX_ALCANCE) {
-	  if (usaOdometria) {	
-	    p+=pose(odoX,odoY,odoAng);
-	    linhas<<p.x<<","<<p.y<<","<<it->x<<","<<it->y<<std::endl;
-	  }
-            mapa->marcaLinha(origem.x+p.x,origem.y+ p.y,origem.x+ it->x,origem.y+ it->y);
-        }
-    }
+			if (usaOdometria) {	
+				p+=pose(odoX,odoY,odoAng);
+				linhas<<p.x<<","<<p.y<<","<<it->x<<","<<it->y<<std::endl;
+			}
+			mapa->marcaLinha(origem.x+p.x,origem.y+ p.y,origem.x+ it->x,origem.y+ it->y);
+		}
+	}
     static int numScans = 0;   
     if (numScans % 10==0) {
         char s[80];
         std::sprintf(s, "mapa%d", numScans++);
         mapa->salva(s);
-    }
-    
+    }    
     std::ofstream arqPoses; arqPoses.open("poses", std::ios::out | std::ios::app);
     arqPoses << poses.back().x << "," << poses.back().y << "," << poses.back().angulo << std::endl;
     //std::cout << poses.back().x << "," << poses.back().y << "," << poses.back().angulo << std::endl;

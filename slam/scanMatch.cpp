@@ -90,17 +90,15 @@ Eigen::Transform<double, 2, Eigen::Affine> cria_transformacao(double angulo, dou
     return T;
 }
 
-double fobj(Eigen::VectorXd v,std::vector<ponto> & scanOrigem, std::vector<ponto> & scanDestino)
+double fobj(Eigen::VectorXd v,std::vector<ponto> & scanOrigem, std::vector<ponto> & scanDestino, std::vector<std::vector<size_t> > &idx)
 {
 	//std::cout << "\nv =" << v(0) << "," << v(1) << "," << v(2)<<std::endl;//debugging -nan(ind)
     pose p(v);
-    double erro=0.0;
-    
-    PointCloud<double> cloud; cloud.pts = scanDestino;
-    double query[2] = { scanOrigem[0].x,scanOrigem[0].y };
-    std::vector<std::vector<size_t> > idx=constroiKDtree<double>(cloud, scanOrigem,1);
+    double erro=0.0;    
+    //PointCloud<double> cloud; cloud.pts = scanDestino;
+    //double query[2] = { scanOrigem[0].x,scanOrigem[0].y };
+    //std::vector<std::vector<size_t> > idx=constroiKDtree<double>(cloud, scanOrigem,1);
     int numPontos = idx.size();
-    double query_pt[2] = { 1.0,1.0 };
     for (size_t i = 0; i < numPontos; i+=1){
         for (size_t j = 0; j < idx[i].size(); j++){
             erro += (scanDestino[idx[i][j]] - (p + scanOrigem[i])).quadradoNorma();
@@ -110,14 +108,14 @@ double fobj(Eigen::VectorXd v,std::vector<ponto> & scanOrigem, std::vector<ponto
     return std::sqrt(erro/((double)numPontos));
 }
 
-double fobjMelhorada(Eigen::VectorXd v, std::vector<ponto> & scanOrigem, std::vector<ponto> & scanDestino, gridMap *m)
+double fobjMelhorada(Eigen::VectorXd v, std::vector<ponto> & scanOrigem, std::vector<ponto> & scanDestino, std::vector<std::vector<size_t> > &idx, gridMap *m)
 {
     pose p(v);
     int numPontos = scanOrigem.size();
     int maxLin = m->maxLinhas /10;
     int maxCol = m->maxColunas /10;
     transforma_vetor_pontos(scanOrigem, p);
-    double erro =fobj(v,scanOrigem,scanDestino);
+    double erro =fobj(v,scanOrigem,scanDestino,idx);
     double diffMapa = 0.0;
     for (size_t i = 0; i < scanDestino.size(); i++){
         diffMapa -= m->leMapa(std::round(scanOrigem[i].x), std::round(scanOrigem[i].y));
@@ -189,8 +187,10 @@ pose psoScanMatch(std::vector<ponto> & scanOrigem, std::vector<ponto> & scanDest
 
     //std::function<double(Eigen::VectorXd)> objetivo= 
     //    std::bind(fobj,_1,scanOrigem, scanDestino);//wrapper para a fobj, requer apenas a transformacao
+	PointCloud<double> cloud; cloud.pts = scanDestino;
+	std::vector<std::vector<size_t> > idx = constroiKDtree<double>(cloud, scanOrigem, 1);
     std::function<double(Eigen::VectorXd)> objetivo =
-            std::bind(fobjMelhorada,_1,scanOrigem, scanDestino,m);//wrapper para a fobj, requer apenas a transformacao
+            std::bind(fobjMelhorada,_1,scanOrigem, scanDestino,idx,m);//wrapper para a fobj, requer apenas a transformacao
     std::function<double(Eigen::VectorXd)> restricao = fRestricaoPadrao;
     double erro = pso_gbest(x, objetivo, opcoes, limiteInferior, limiteSuperior, restricao);
     std::cout << "\t erro = " << erro;
@@ -236,8 +236,10 @@ pose psoScanMatch(std::vector<ponto>& scanOrigem, std::vector<ponto>& scanDestin
 
     //std::function<double(Eigen::VectorXd)> objetivo =
     //    std::bind(fobj, _1, scanOrigem, scanDestino);//wrapper para a fobj, requer apenas a transformacao
+	PointCloud<double> cloud; cloud.pts = scanDestino;
+	std::vector<std::vector<size_t> > idx = constroiKDtree<double>(cloud, scanOrigem, 1);
     std::function<double(Eigen::VectorXd)> objetivo =
-        std::bind(fobjMelhorada, _1, scanOrigem, scanDestino,m);//wrapper para a fobj, requer apenas a transformacao
+        std::bind(fobjMelhorada, _1, scanOrigem, scanDestino,idx,m);//wrapper para a fobj, requer apenas a transformacao
     std::function<double(Eigen::VectorXd)> restricao =
             std::bind(fRestricao, _1,outrasPoses );
     double erro = pso_gbest(x, objetivo, opcoes, limiteInferior, limiteSuperior, restricao);

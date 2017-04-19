@@ -96,6 +96,7 @@ int main()
     //std::cout << "\nEscala = " << ESCALA;
 	//slam s(1000, 1000, ESCALA); 
     slam s(5000, 5000, ESCALA, true, true, 0.5, 0.9);
+	std::ofstream arqLinhas; arqLinhas.open("linhas", std::ios::out | std::ios::trunc);
 	//teste de funcionamento...
 #if TESTE_MOBILE_SIM_==1
     auto tmp = leScansCSV("dump04_04_2017 09_04_14.csv",181);
@@ -105,16 +106,11 @@ int main()
 	if(TESTE_CSV_) {
 		std::vector <std::vector<ponto> > leituras; leituras.reserve(tmp.size());
 		paraCoordenadasCartesianas(tmp,leituras, ESPACO_ANG, MEIO_ESPACO_ANG);
-		std::ofstream arqLinhas; arqLinhas.open("linhasSim", std::ios::trunc);
+		std::ofstream arqLinhas; arqLinhas.open("linhas",std::ios::out | std::ios::trunc);
 		int i = 0;
 		for (i = 0; i < leituras.size(); i++) {
 			std::cout << "\nIteracao " << i;
-            //for (int j = 0; j < 5; j++)
-            //{
-                s.atualiza(leituras.at(i),false,0,0,0,arqLinhas);
-            //}
-            //if (i % 50 == 0 && i > 0)
-                //s.corrige();
+                s.atualiza(leituras.at(i),false,0.0,0.0,0.0,arqLinhas);
 		}
 	}
 //	else {
@@ -124,5 +120,6 @@ int main()
 //			s.atualiza(cria_scan_de_teste());
 //		}
 //	}	
-//    return 0;
+    return 0;
+	arqLinhas.close();
 }
