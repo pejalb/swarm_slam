@@ -12,7 +12,6 @@
 #include "slam.h"
 #define TESTE_CSV_ 0
 #include "constantes.h"
-#include <thread>
 #include <functional>
 
 int main(int argc, char **argv)
@@ -121,6 +120,9 @@ int main(int argc, char **argv)
 	/*FINAL DA INICIALIZAÇÃO*/
     while(robot.isConnected())
     {	
+	//DEBUGGING
+	std::cout<<"\nConectado ao robo!"<<std::endl;
+
 	robot.lock();
 	robot.enableMotors();
 	//robot.setVel(100.0);
@@ -129,9 +131,7 @@ int main(int argc, char **argv)
 	robot.lock();
 	/*Cria um STL map com todos os lasers presentes no robô (instalados e RECONHECIDOS)*/
 	std::map<int, ArLaser*> *lasers = robot.getLaserMap();/*Note que o uso do mapa permite agrupar a chave e o ponteiro para */
-	double odoX = 0.0;
-	double odoY = 0.0;
-	double odoTH = 0.0;
+	
 	for(std::map<int, ArLaser*>::const_iterator i = lasers->begin(); i != lasers->end(); ++i)/*STL iterator para varrer os lasers em função das chaves que os identificam*/
 	{
 	    int laserIndex = (*i).first;/*Identificador numerico*/
@@ -139,34 +139,38 @@ int main(int argc, char **argv)
 	    if(!laser)
 	        continue;
 	    ++numLasers;
+		//DEBUGGING
+	std::cout<<"\npreparando o laser para a!"<<std::endl;
+
 	    laser->lockDevice();/*Trava para a leitura*/
 	    int contador = 0;
 	    std::list<ArPoseWithTime*> *currentReadings = laser->getCurrentBuffer(); //X,Y e atributos
 	    const std::list<ArSensorReading*> *rawReadings = laser->getRawReadings();
 		/*Leituras não processadas são lidas abaixo*/
-		conta = 0;
-		
-		dumpLaser << "\n";
+	    conta = 0;
+		//double odoX = (*itR)->getXTaken()/ESCALA;
+		//double odoY = (*itR)->getYTaken()/ESCALA;
+		//double odoTH = (*itR)->getThTaken();
+	//DEBUGGING
+	    std::cout<<"\nChegou a travar o laser para leitura!"<<std::endl;
+	    dumpLaser << "\n";
 	    for (itR = rawReadings->begin(); itR != rawReadings->end(); ++itR)/*Varre as leituras em sequência da direita para a esquerda*/
 	    {
-			ArPose posRobo = (*itR)->getPose();/*Pose fornecida pela biblioteca Aria*/
-			(*itR)->getAdjusted();
-	        dumpLaser << (*itR)->getRange() <<",";
-            contador++;
-			odoX = (*itR)->getXTaken();
-			odoY = (*itR)->getYTaken();
-			odoTH = (*itR)->getThTaken()*fatorGrauRad;
-			std::cout << "\nLooping over lasers \n! ";
-	    if (contador <541)
-	     dumpLaser<<",";
+		ArPose posRobo = (*itR)->getPose();/*Pose fornecida pela biblioteca Aria*/
+		(*itR)->getAdjusted();
+	    	dumpLaser << (*itR)->getRange() <<",";
+            	contador++;
+	    	if (contador <541)
+	     	dumpLaser<<",";
+		if (contador==541){
+   		    s.atualiza(leituras,true,(*itR)->getXTaken(),(*itR)->getYTaken(),(*itR)->getThTaken()*fatorGrauRad,dumpLinhas);
+                    dumpPoses << (*itR)->getPose().getX()<<","<<(*itR)->getPose().getX()<<","<<(*itR)->getThTaken()*fatorGrauRad<<std::endl;                }	
             leituras.push_back(ponto((*itR)->getLocalX()/ESCALA, (*itR)->getLocalY()/ESCALA));
 	    //dumpLinhas<<(*itR)->getXTaken()/ESCALA<<","<<(*itR)->getYTaken()/ESCALA<<","<<(*itR)->getX()/ESCALA<<","<<(*itR)->getY()/ESCALA<<std::endl;
 	    }
 	    dumpLaser << "\n";
 	    
-	    dumpPoses << odoX<<","<<odoY<<","<<odoTH<<std::endl;
-        s.atualiza(leituras,true,odoX,odoY,odoTH,dumpLinhas);
-	//dumpPoses << (*itR)->getXTaken()/ESCALA,(*itR)->getYTaken()/ESCALA,(*itR)->getThTaken()*fatorGrauRad <<std::endl;
+	           	//dumpPoses << (*itR)->getXTaken()/ESCALA,(*itR)->getYTaken()/ESCALA,(*itR)->getThTaken()*fatorGrauRad <<std::endl;
 	
         leituras.clear();
         laser->unlockDevice();	/*destrava o laser até a próxima tentativa de leitura*/
