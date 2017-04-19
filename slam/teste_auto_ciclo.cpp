@@ -129,7 +129,9 @@ int main(int argc, char **argv)
 	robot.lock();
 	/*Cria um STL map com todos os lasers presentes no robô (instalados e RECONHECIDOS)*/
 	std::map<int, ArLaser*> *lasers = robot.getLaserMap();/*Note que o uso do mapa permite agrupar a chave e o ponteiro para */
-	
+	double odoX = 0.0;
+	double odoY = 0.0;
+	double odoTH = 0.0;
 	for(std::map<int, ArLaser*>::const_iterator i = lasers->begin(); i != lasers->end(); ++i)/*STL iterator para varrer os lasers em função das chaves que os identificam*/
 	{
 	    int laserIndex = (*i).first;/*Identificador numerico*/
@@ -143,9 +145,6 @@ int main(int argc, char **argv)
 	    const std::list<ArSensorReading*> *rawReadings = laser->getRawReadings();
 		/*Leituras não processadas são lidas abaixo*/
 		conta = 0;
-		//double odoX = (*itR)->getXTaken()/ESCALA;
-		//double odoY = (*itR)->getYTaken()/ESCALA;
-		//double odoTH = (*itR)->getThTaken();
 		
 		dumpLaser << "\n";
 	    for (itR = rawReadings->begin(); itR != rawReadings->end(); ++itR)/*Varre as leituras em sequência da direita para a esquerda*/
@@ -154,6 +153,10 @@ int main(int argc, char **argv)
 			(*itR)->getAdjusted();
 	        dumpLaser << (*itR)->getRange() <<",";
             contador++;
+			odoX = (*itR)->getXTaken();
+			odoY = (*itR)->getYTaken();
+			odoTH = (*itR)->getThTaken()*fatorGrauRad;
+			std::cout << "\nLooping over lasers \n! ";
 	    if (contador <541)
 	     dumpLaser<<",";
             leituras.push_back(ponto((*itR)->getLocalX()/ESCALA, (*itR)->getLocalY()/ESCALA));
@@ -161,8 +164,8 @@ int main(int argc, char **argv)
 	    }
 	    dumpLaser << "\n";
 	    
-	    dumpPoses << (*itR)->getPose().getX()<<","<<(*itR)->getPose().getX()<<","<<(*itR)->getThTaken()*fatorGrauRad<<std::endl;
-        s.atualiza(leituras,true,(*itR)->getXTaken(),(*itR)->getYTaken(),(*itR)->getThTaken()*fatorGrauRad,dumpLinhas);
+	    dumpPoses << odoX<<","<<odoY<<","<<odoTH<<std::endl;
+        s.atualiza(leituras,true,odoX,odoY,odoTH,dumpLinhas);
 	//dumpPoses << (*itR)->getXTaken()/ESCALA,(*itR)->getYTaken()/ESCALA,(*itR)->getThTaken()*fatorGrauRad <<std::endl;
 	
         leituras.clear();
