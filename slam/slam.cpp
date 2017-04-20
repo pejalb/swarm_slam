@@ -153,10 +153,10 @@ void slam::corrige()
     // monta o sistema linear
     Eigen::SparseMatrix<double> H(poses.size(),poses.size());
     //]Eigen::VectorXd dX(poses.size(),1), dY(poses.size(), 1), dAng(poses.size(), 1), x(poses.size(), 1),y(poses.size(), 1),ang(poses.size(), 1);
-	Eigen::VectorXd b(poses.size(), 1)
+	Eigen::SparseMatrix<double> b(poses.size(), 3), dX(poses.size(), 3);
 	// fill A
 	H.setZero();
-    //pose tmp;
+    pose tmp;
     int i;
 	Eigen::Matrix3d A_ij, B_ij, covMat;
 	covMat.setIdentity();
@@ -165,23 +165,21 @@ void slam::corrige()
 			A_ij = formaMatrizA(poses, i, j);
 			B_ij = formaMatrizB(poses, i, j);
 			//matriz H
-			H.block(i, i, 3, 3) += (A_ij.transpose())*covMat*A_ij;
-			H.block(j, i, 3, 3) += (B_ij.transpose())*covMat*A_ij;
-			H.block(i, j, 3, 3) += (A_ij.transpose())*covMat*B_ij;
-			H.block(j, j, 3, 3) += (B_ij.transpose())*covMat*B_ij;
+			H.block<3,3>(i, i) += (A_ij.transpose())*covMat*A_ij;
+			H.block<3,3>(j, i) += (B_ij.transpose())*covMat*A_ij;
+			H.block<3,3>(i, j) += (A_ij.transpose())*covMat*B_ij;
+			H.block<3,3>(j, j) += (B_ij.transpose())*covMat*B_ij;
+			// fill b
+			tmp = poses[j] - poses[i];
+			b.block<3,3>(i,0) += (A_ij.transpose())*covMat*Eigen::Vector3d(tmp.x, tmp.y, tmp.angulo);
+			b.block<3,3>(j, 0) += (B_ij.transpose())*covMat*Eigen::Vector3d(tmp.x, tmp.y, tmp.angulo);
 		}
-        tmp = poses[i + 1] - poses[i];
-        A.insert(i, i + 1)=-1;
-        dX(i) = tmp.x;
-        dY(i) = tmp.y;
-        dAng(i) = tmp.angulo;
     }
-    
-    // fill b
-    // solve Ax = b
+        // solve Ax = b
     Eigen::SimplicialLDLT<Eigen::SparseMatrix<double>> solver;
-    solver.compute(A);
-    
+    //solver.compute(H);
+	//dX=solver.solve(b);
+	std::cout << "\nresolvi!";
 }
 void salvaWrapper (slam *s,char nome[80])
 {
