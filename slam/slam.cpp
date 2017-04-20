@@ -151,16 +151,24 @@ inline double fRestricaoPoses(Eigen::VectorXd v, std::vector<pose>& outrasPoses)
 void slam::corrige()
 {
     // monta o sistema linear
-    Eigen::SparseMatrix<double> A(poses.size(),poses.size());
-    Eigen::VectorXd dX(poses.size(),1), dY(poses.size(), 1), dAng(poses.size(), 1), x(poses.size(), 1),y(poses.size(), 1),ang(poses.size(), 1);
-    // fill A
-    A.setIdentity();
-    pose tmp;
+    Eigen::SparseMatrix<double> H(poses.size(),poses.size());
+    //]Eigen::VectorXd dX(poses.size(),1), dY(poses.size(), 1), dAng(poses.size(), 1), x(poses.size(), 1),y(poses.size(), 1),ang(poses.size(), 1);
+	Eigen::VectorXd b(poses.size(), 1)
+	// fill A
+	H.setZero();
+    //pose tmp;
     int i;
-
+	Eigen::Matrix3d A_ij, B_ij, covMat;
+	covMat.setIdentity();
     for ( i = 1; i < poses.size()-1; i++) {
 		for (int j = 0; j < poses.size(); j++){
-
+			A_ij = formaMatrizA(poses, i, j);
+			B_ij = formaMatrizB(poses, i, j);
+			//matriz H
+			H.block(i, i, 3, 3) += (A_ij.transpose())*covMat*A_ij;
+			H.block(j, i, 3, 3) += (B_ij.transpose())*covMat*A_ij;
+			H.block(i, j, 3, 3) += (A_ij.transpose())*covMat*B_ij;
+			H.block(j, j, 3, 3) += (B_ij.transpose())*covMat*B_ij;
 		}
         tmp = poses[i + 1] - poses[i];
         A.insert(i, i + 1)=-1;
