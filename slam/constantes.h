@@ -7,6 +7,7 @@
 
 #ifndef M_PI
 #define M_PI (3.14159265358979323846)
+
 #endif
 
 #ifdef GRIDMAP_
@@ -57,6 +58,7 @@
 #define LEITURAS_POR_SCAN (541) //para aria 541 leituras por scan
 //numero minimo de poses cujo armazenamento e garantido
 #define NUM_MINIMO_POSES (600)
+
 #define MAX_ALCANCE 20000/ESCALA
 #endif // TESTE_CSV==1
 

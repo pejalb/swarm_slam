@@ -129,7 +129,7 @@ inline double fRestricaoPadrao(Eigen::VectorXd v)
     return 0.0;// v.squaredNorm();//se a restricao nao-linear nao foi fornecida...usa um "placeholder"
 }
 
-pose psoScanMatch(std::vector<ponto> & scanOrigem, std::vector<ponto> & scanDestino,double estimativaInicial[3],gridMap *m) throw(std::domain_error)
+pose psoScanMatch(std::vector<ponto> & scanOrigem, std::vector<ponto> & scanDestino,double estimativaInicial[3],gridMap *m) 
 {
     using namespace std::placeholders;
     //assert(scanOrigem.size() == scanDestino.size());
@@ -200,7 +200,7 @@ pose psoScanMatch(std::vector<ponto> & scanOrigem, std::vector<ponto> & scanDest
 }
 
 pose psoScanMatch(std::vector<ponto>& scanOrigem, std::vector<ponto>& scanDestino, double estimativaInicial[3], gridMap *m,
-    std::vector<pose>& outrasPoses, double(*fRestricao)(Eigen::VectorXd, std::vector<pose>&)) throw(std::domain_error)
+    std::vector<pose>& outrasPoses, double(*fRestricao)(Eigen::VectorXd, std::vector<pose>&)) 
 {
     using namespace std::placeholders;
     Eigen::VectorXd x;// = Eigen::VectorXd::Zero(3, 1);

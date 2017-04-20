@@ -110,7 +110,8 @@ int main()
 		int i = 0;
 		for (i = 0; i < leituras.size(); i++) {
 			std::cout << "\nIteracao " << i;
-                s.atualiza(leituras.at(i),false,0.0,0.0,0.0,arqLinhas);
+			s.atualiza(leituras.at(i),false,0.0,0.0,0.0,arqLinhas);
+			//teste
 		}
 	}
 //	else {

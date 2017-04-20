@@ -6,51 +6,7 @@
 #include <cmath>
 #include <Eigen/SparseCholesky>
 #include <functional>
-
-inline Eigen::Matrix2d matrizDeRotacao(double angulo)
-{
-	Eigen::Matrix2d R;
-	double ct = std::cos(angulo);
-	double st = std::sin(angulo);
-	R(0, 0) = ct;
-	R(0, 1) = -st;
-	R(1, 0) = st;
-	R(1, 1) = ct;
-	return R;
-}
-
-inline Eigen::Matrix3d formaMatrizA(std::vector<pose> &poses, int i, int j)
-{
-	Eigen::Matrix3d A;
-	Eigen::Matrix2d R_i, dR_i, R_ij;
-	double ct, st;
-	R_ij = matrizDeRotacao((poses[j] - poses[i]).angulo);
-	R_i = matrizDeRotacao(poses[i].angulo);
-	ct = std::cos(poses[i].angulo);
-	st = std::sin(poses[i].angulo);
-	dR_i(0, 0) = -st; dR_i(0, 1) = -ct;
-	dR_i(1, 0) = ct; dR_i(1, 1) = -st;
-	Eigen::Vector2d t;
-	t(0) = poses[j].x - poses[i].x;
-	t(1) = poses[j].y - poses[i].y;
-	//confira o código abaixo!!!
-	A.block(0, 0, 2, 2) << -R_ij.transpose()*R_i.transpose();
-	A.block(0, 2, 2, 1) << R_ij.transpose()*dR_i.transpose()*t;
-	A.block(2, 0, 1, 2) << Eigen::Vector2d::Zero(1, 2); A(2, 2) = -1;
-	return A;
-}
-
-inline Eigen::Matrix3d formaMatrizB(std::vector<pose> & poses, int i, int j)
-{
-	Eigen::Matrix3d B;
-	Eigen::Matrix2d R_ij;
-	R_ij = matrizDeRotacao((poses[j] - poses[i]).angulo);
-	B.block(0, 0, 2, 2) << R_ij;
-	B.block(0, 2, 2, 1) << Eigen::Vector2d::Zero(2, 1);
-	B.block(2, 0, 1, 2) << Eigen::Vector2d::Zero(1, 2);
-	B(2, 2) = 1;
-	return B;
-}
+#include <thread>
 
 inline void transforma_vetor_pontos(std::vector<ponto>& scan, pose &p)
 {
@@ -159,9 +115,6 @@ void slam::corrige()
     int i;
 
     for ( i = 1; i < poses.size()-1; i++) {
-		for (int j = 0; j < poses.size(); j++){
-
-		}
         tmp = poses[i + 1] - poses[i];
         A.insert(i, i + 1)=-1;
         dX(i) = tmp.x;
@@ -173,7 +126,32 @@ void slam::corrige()
     // solve Ax = b
     Eigen::SimplicialLDLT<Eigen::SparseMatrix<double>> solver;
     solver.compute(A);
-    
+    if (solver.info() != Eigen::Success) {
+        // decomposition failed
+        return;
+    }
+    x = solver.solve(dX);
+    y = solver.solve(dY);
+    ang = solver.solve(dAng);
+    // corrige as poses
+    poses.clear();
+    std::ofstream arqPoses; arqPoses.open("poses", std::ios::out | std::ios::trunc);
+    arqPoses << "\nx,y,angulo,\n";
+    poses.push_back(pose(mapa->maxLinhas / 2, mapa->maxColunas / 2, 0));
+    for (i = 1; i < scans.size(); i++) {
+        poses.push_back(poses[i-1]+pose(x(i), y(i), ang(i)));
+        arqPoses << poses[i].x << "," << poses[i].y << "," << poses[i].angulo << std::endl;
+    }
+    arqPoses.close();
+    this->mapa->limpa();
+   // int i;
+    i=0;
+    for (std::vector<std::vector<ponto> >::iterator sc = scans.begin(); sc != scans.end(); sc++) {
+        for (std::vector<ponto>::iterator it = sc->begin(); it != sc->end(); it++) {
+            ponto corrigido(((poses[i]) + (*it)));
+            mapa->marcaLinha(std::round(poses[i].x), std::round(poses[i].y), std::round(corrigido.x), std::round(corrigido.y));
+        }
+    }
 }
 void salvaWrapper (slam *s,char nome[80])
 {
