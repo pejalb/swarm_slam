@@ -115,13 +115,14 @@ double fobjMelhorada(Eigen::VectorXd v, std::vector<ponto> & scanOrigem, std::ve
     int maxLin = m->maxLinhas /10;
     int maxCol = m->maxColunas /10;
     transforma_vetor_pontos(scanOrigem, p);
-    double erro =fobj(v,scanOrigem,scanDestino,idx);
+    double erro =1.0+fobj(v,scanOrigem,scanDestino,idx);
     double diffMapa = 0.0;
     for (size_t i = 0; i < scanDestino.size(); i++){
+        //std::cout << "\n mapa (" << std::round(scanOrigem[i].x) << "," << std::round(scanOrigem[i].y) << ")\n";
         diffMapa -= m->leMapa(std::round(scanOrigem[i].x), std::round(scanOrigem[i].y));
     }
     //std::cout << "\nerro = " << erro << std::endl;
-    return std::sqrt(erro / ((double)numPontos))*diffMapa;
+    return std::sqrt(erro / ((double)numPontos))*(1.0+diffMapa);
 }
 
 inline double fRestricaoPadrao(Eigen::VectorXd v)
