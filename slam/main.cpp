@@ -95,7 +95,7 @@ int main()
 {
     //std::cout << "\nEscala = " << ESCALA;
 	//slam s(1000, 1000, ESCALA); 
-    slam s(5000, 5000, ESCALA, true, true, 0.5, 0.9);
+    slam s(1000, 1000, ESCALA, true, true, 0.5, 0.9);
 	std::ofstream arqLinhas; arqLinhas.open("linhas", std::ios::out | std::ios::trunc);
 	//teste de funcionamento...
 #if TESTE_MOBILE_SIM_==1

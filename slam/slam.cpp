@@ -219,6 +219,7 @@ void slam::atualiza(std::vector<ponto> scan,bool usaOdometria, double odoX,doubl
 				linhas<<p.x<<","<<p.y<<","<<it->x<<","<<it->y<<std::endl;
 			}
 			mapa->marcaLinha(origem.x+p.x,origem.y+ p.y,origem.x+ it->x,origem.y+ it->y);
+            linhas << p.x << "," << p.y << "," << it->x << "," << it->y << std::endl;
 		}
 	}
     static int numScans = 0;   
