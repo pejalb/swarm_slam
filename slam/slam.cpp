@@ -6,7 +6,9 @@
 #include <cmath>
 #include <Eigen/SparseCholesky>
 #include <functional>
-
+#define ABS(x) ((x)>=0)?(x):(-x)
+#define TOL 1e-3
+#define PROXIMOS(a,b,tol) ABS(ABS(a)-ABS(b))<=tol
 
 inline Eigen::Matrix2d matrizDeRotacao(double angulo)
 {
@@ -162,60 +164,69 @@ void slam::corrige()
     //]Eigen::VectorXd dX(poses.size(),1), dY(poses.size(), 1), dAng(poses.size(), 1), x(poses.size(), 1),y(poses.size(), 1),ang(poses.size(), 1);
     //Eigen::SparseMatrix<double> b(poses.size(), 3), dX(poses.size(), 3);
     Eigen::SparseVector<double> b(3 * poses.size()),dX(3 * poses.size());
-    // fill A
-    H.setZero();
-    b.setZero();
-    double max1, max2;
-
-    pose tmp;
-    int i,n,m;
-    Eigen::Matrix3d A_ij, B_ij, covMat, Blck0, Blck1, Blck2, Blck3;
-    Eigen::Vector3d Blck4, Blck5;
-    covMat.setIdentity();
-    for (i = 0; i < poses.size()-2; i++) {
-        for (int j = 0; j < poses.size()-2; j++) {
-            A_ij = formaMatrizA(poses, i, j);
-            B_ij = formaMatrizB(poses, i, j);
-            //matriz H
-            Blck0 = (A_ij.transpose())*covMat*A_ij;
-            Blck1 = (A_ij.transpose())*covMat*B_ij;
-            Blck2 = (B_ij.transpose())*covMat*A_ij;            
-            Blck3 = (B_ij.transpose())*covMat*B_ij;
-            Blck4 = (A_ij.transpose())*covMat*Eigen::Vector3d(tmp.x, tmp.y, tmp.angulo);
-            Blck5 = (B_ij.transpose())*covMat*Eigen::Vector3d(tmp.x, tmp.y, tmp.angulo);
-            for ( n = 0; n < 3; n++){
-                for (m = 0; m < 3; m++){
-                    //H.block<3, 3>(i, i) += (A_ij.transpose())*covMat*A_ij;
-                    H.coeffRef(i + n, i + m) += Blck0(n, m);
-                    //H.block<3, 3>(j, i) += (A_ij.transpose())*covMat*B_ij;
-                    H.coeffRef(i + n, j + m) += Blck1(n, m);
-                    //H.block<3, 3>(j, i) += (B_ij.transpose())*covMat*A_ij;
-                    H.coeffRef(j + n, i + m) += Blck2(n, m);
-                    //H.block<3, 3>(j, j) += (B_ij.transpose())*covMat*B_ij;
-                    H.coeffRef(j + n, j + m) += Blck3(n, m);
-                    //b.block<3, 3>(i, 0) += (A_ij.transpose())*covMat*Eigen::Vector3d(tmp.x, tmp.y, tmp.angulo);                    
+    bool primeira = true;
+    double max1, max2; max1 = max2 = 0.0;
+    do {
+        max2 = max1;
+        // fill A
+        H.setZero();
+        b.setZero();        
+        pose tmp;
+        int i, n, m;
+        Eigen::Matrix3d A_ij, B_ij, covMat, Blck0, Blck1, Blck2, Blck3;
+        Eigen::Vector3d Blck4, Blck5;
+        covMat.setIdentity();
+        for (i = 0; i < poses.size() - 2; i++) {
+            for (int j = 0; j < poses.size() - 2; j++) {
+                A_ij = formaMatrizA(poses, i, j);
+                B_ij = formaMatrizB(poses, i, j);
+                //matriz H
+                Blck0 = (A_ij.transpose())*covMat*A_ij;
+                Blck1 = (A_ij.transpose())*covMat*B_ij;
+                Blck2 = (B_ij.transpose())*covMat*A_ij;
+                Blck3 = (B_ij.transpose())*covMat*B_ij;
+                Blck4 = (A_ij.transpose())*covMat*Eigen::Vector3d(tmp.x, tmp.y, tmp.angulo);
+                Blck5 = (B_ij.transpose())*covMat*Eigen::Vector3d(tmp.x, tmp.y, tmp.angulo);
+                for (n = 0; n < 3; n++) {
+                    for (m = 0; m < 3; m++) {
+                        //H.block<3, 3>(i, i) += (A_ij.transpose())*covMat*A_ij;
+                        H.coeffRef(i + n, i + m) += Blck0(n, m);
+                        //H.block<3, 3>(j, i) += (A_ij.transpose())*covMat*B_ij;
+                        H.coeffRef(i + n, j + m) += Blck1(n, m);
+                        //H.block<3, 3>(j, i) += (B_ij.transpose())*covMat*A_ij;
+                        H.coeffRef(j + n, i + m) += Blck2(n, m);
+                        //H.block<3, 3>(j, j) += (B_ij.transpose())*covMat*B_ij;
+                        H.coeffRef(j + n, j + m) += Blck3(n, m);
+                        //b.block<3, 3>(i, 0) += (A_ij.transpose())*covMat*Eigen::Vector3d(tmp.x, tmp.y, tmp.angulo);                    
+                    }
+                    b.coeffRef(i + n) = Blck4(n);
+                    //b.block<3, 3>(j, 0) += (B_ij.transpose())*covMat*Eigen::Vector3d(tmp.x, tmp.y, tmp.angulo);
+                    b.coeffRef(j + n) = Blck5(n);
                 }
-                b.coeffRef(i + n) = Blck4(n);
+                // fill b
+               // tmp = poses[j] - poses[i];
+                //b.block<3, 3>(i, 0) += (A_ij.transpose())*covMat*Eigen::Vector3d(tmp.x, tmp.y, tmp.angulo);
                 //b.block<3, 3>(j, 0) += (B_ij.transpose())*covMat*Eigen::Vector3d(tmp.x, tmp.y, tmp.angulo);
-                b.coeffRef(j + n) = Blck5(n);
-            }        
-            // fill b
-           // tmp = poses[j] - poses[i];
-            //b.block<3, 3>(i, 0) += (A_ij.transpose())*covMat*Eigen::Vector3d(tmp.x, tmp.y, tmp.angulo);
-            //b.block<3, 3>(j, 0) += (B_ij.transpose())*covMat*Eigen::Vector3d(tmp.x, tmp.y, tmp.angulo);
+            }
         }
-    }
-    //fixa o primeiro nó
-    H.coeffRef(0, 0) += 1.0; H.coeffRef(1, 1) = 1.0; H.coeffRef(2, 2) = 1.0;
-    // solve H*dX = -b
-    Eigen::SimplicialLDLT<Eigen::SparseMatrix<double> > solver;
-    solver.compute(H);
-    dX=solver.solve(-b);
-    for (i = 0; i < poses.size(); i += 3) {
-        poses[i].x += dX.coeff(i);
-        poses[i].y += dX.coeff(i+1);
-        poses[i].angulo += dX.coeff(i+2);
-    }
+        //fixa o primeiro nó
+        H.coeffRef(0, 0) += 1.0; H.coeffRef(1, 1) = 1.0; H.coeffRef(2, 2) = 1.0;
+        // solve H*dX = -b
+        Eigen::SimplicialLDLT<Eigen::SparseMatrix<double> > solver;
+        solver.compute(H);
+        dX = solver.solve(-b);
+        for (i = 0; i < poses.size(); i += 3) {
+            poses[i].x += dX.coeff(i);
+            if (dX.coeff(i) > max1)
+                max1 = dX.coeff(i);
+            poses[i].y += dX.coeff(i + 1);
+            if (dX.coeff(i + 1) > max1)
+                max1 = dX.coeff(i + 1);
+            poses[i].angulo += dX.coeff(i + 2);
+            if (dX.coeff(i) > max1)
+                max1 = dX.coeff(i + 1);
+        }
+    } while (!PROXIMOS(max1, max2, TOL));
     std::cout << "\nresolvi!";
     if (redesenha) {
         mapa->limpa();
