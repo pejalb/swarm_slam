@@ -1,8 +1,8 @@
 #include "pso.h"
 #include <cstdlib>
 #include <vector>
-#include <iostream>//
-
+#include <iostream>
+#define PENALIDADE (100000.0)
 using namespace Eigen;
 
 
@@ -134,9 +134,11 @@ double pso_gbest(VectorXd &x, std::function<double(Eigen::VectorXd)> fobj, opcoe
                     for (j = 0; j < opcoes.numDimensoes; j++) {
                         if (posicoes(i, j) < limiteInferior[j]) {
                             posicoes(i, j) = limiteInferior[j];
+                            melhoresAptidoes[i] += PENALIDADE;
                         }
                         if (posicoes(i, j) > limiteSuperior[j]) {
                             posicoes(i, j) = limiteSuperior[j];
+                            melhoresAptidoes[i] += PENALIDADE;
                         }
                     }
                 }
@@ -148,10 +150,12 @@ double pso_gbest(VectorXd &x, std::function<double(Eigen::VectorXd)> fobj, opcoe
                         if (posicoes(i, j) < limiteInferior[j]) {
                             violacaoLim = limiteInferior[j] - posicoes(i, j);
                             posicoes(i, j) = limiteInferior[j] + violacaoLim;
+                            melhoresAptidoes[i] += PENALIDADE;
                         }
                         if (posicoes(i, j) > limiteSuperior[j]) {
                             violacaoLim = posicoes(i, j) - limiteSuperior[j];
                             posicoes(i, j) = limiteSuperior[j] - violacaoLim;
+                            melhoresAptidoes[i] += PENALIDADE;
                         }
                     }
                 }

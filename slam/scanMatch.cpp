@@ -4,9 +4,18 @@
 #include <cstdarg>
 #include <exception>
 #include <functional>
+#include <cmath>
 #include "pointcloud_kd_tree.h"
 #include <iostream>//debugging
 using namespace nanoflann;
+
+
+inline double limitaAngulo(double x) {
+    x = std::fmod(x + M_PI, M_2PI);
+    if (x < 0)
+        x += M_2PI;
+    return x - M_PI;
+}
 
 inline void transforma_vetor_pontos(std::vector<ponto>& scan, pose &p)
 {
@@ -115,14 +124,14 @@ double fobjMelhorada(Eigen::VectorXd v, std::vector<ponto> & scanOrigem, std::ve
     int maxLin = m->maxLinhas /10;
     int maxCol = m->maxColunas /10;
     transforma_vetor_pontos(scanOrigem, p);
-    double erro =1.0+fobj(v,scanOrigem,scanDestino,idx);
+    double erro =fobj(v,scanOrigem,scanDestino,idx);
     double diffMapa = 0.0;
     for (size_t i = 0; i < scanDestino.size(); i++){
         //std::cout << "\n mapa (" << std::round(scanOrigem[i].x) << "," << std::round(scanOrigem[i].y) << ")\n";
         diffMapa -= m->leMapa(std::round(scanOrigem[i].x), std::round(scanOrigem[i].y));
     }
     //std::cout << "\nerro = " << erro << std::endl;
-    return std::sqrt(erro / ((double)numPontos))*(1.0+diffMapa);
+    return std::sqrt((1.0+erro)*(1.0 + std::abs(diffMapa)) / ((double)numPontos));
 }
 
 inline double fRestricaoPadrao(Eigen::VectorXd v)
@@ -165,16 +174,15 @@ pose psoScanMatch(std::vector<ponto> & scanOrigem, std::vector<ponto> & scanDest
 	transformTypeToDouble(RT, estimativaSVD);
 	//pose poseRelativa = psoScanMatch(scanOrigem, scanDestino, estimativaInicial);
 //	pose poseRelativa(0.0, 0.0, 0.0);
-	
     if (std::max(std::max(std::abs(estimativaSVD[0]), std::abs(estimativaSVD[1])), 
         std::abs(estimativaSVD[2])) <= opcoes.tolerancia && (std::isnormal(estimativaSVD[2]) || estimativaSVD[2]==0))//nao calcule se ja estiver na tolerancia
         return pose(estimativaSVD[0], estimativaSVD[1], estimativaSVD[2]);
     //se a estimativa estiver muito distante...
-    //use pso para aproximar mais
-    //double limiteInferior[3] = { estimativaInicial[1] + estimativaSVD[0] - DX,estimativaInicial[1] + estimativaSVD[1] - DY,estimativaInicial[2] - D_ANG };
-    //double limiteSuperior[3] = { estimativaInicial[1] + estimativaSVD[0] + DY,estimativaInicial[1] + estimativaSVD[1] + DY,estimativaInicial[2] + D_ANG };
-    double limiteInferior[3] = { estimativaInicial[1] - DX,estimativaInicial[1] - DY,estimativaInicial[2] - D_ANG };
-    double limiteSuperior[3] = { estimativaInicial[1] + DY,estimativaInicial[1] + DY,estimativaInicial[2] + D_ANG };
+    //use pso para aproximar mais m->
+    double limiteInferior[3] = { std::min(estimativaInicial[1] + estimativaSVD[0] - DX,0.0),std::min(estimativaInicial[1] + estimativaSVD[1] - DY,0.0),estimativaInicial[2] - D_ANG };
+    double limiteSuperior[3] = { std::min(estimativaInicial[1] + estimativaSVD[0] + DY,(double)m->maxLinhas) ,std::min(estimativaInicial[1] + estimativaSVD[1] + DY,(double)m->maxColunas),estimativaInicial[2] + D_ANG };
+    //double limiteInferior[3] = { estimativaInicial[1] - DX,estimativaInicial[1] - DY,estimativaInicial[2] - D_ANG };
+    //double limiteSuperior[3] = { estimativaInicial[1] + DY,estimativaInicial[1] + DY,estimativaInicial[2] + D_ANG };
     //ponto center_src(0, 0);
     //ponto center_dst(0, 0);
    // int tamanho = scanOrigem.size();
@@ -196,10 +204,12 @@ pose psoScanMatch(std::vector<ponto> & scanOrigem, std::vector<ponto> & scanDest
             std::bind(fobjMelhorada,_1,scanOrigem, scanDestino,idx,m);//wrapper para a fobj, requer apenas a transformacao
     std::function<double(Eigen::VectorXd)> restricao = fRestricaoPadrao;
     double erro = pso_gbest(x, objetivo, opcoes, limiteInferior, limiteSuperior, restricao);
+    while (!m->pertence(x(0),x(1)))
+        double erro = pso_gbest(x, objetivo, opcoes, limiteInferior, limiteSuperior, restricao);
     std::cout << "\t erro = " << erro<<std::endl;
     if (erro < 0)
-        throw (std::domain_error("\nO processo de otimizacao obteve um valor invalido!"));
-    return pose(x);
+        throw (std::domain_error("\nO processo de otimizacao obteve um valor invalido!"));    
+    return pose(x(0), x(1),limitaAngulo(x(2)));
 }
 
 pose psoScanMatch(std::vector<ponto>& scanOrigem, std::vector<ponto>& scanDestino, double estimativaInicial[3], gridMap *m,
@@ -222,8 +232,8 @@ pose psoScanMatch(std::vector<ponto>& scanOrigem, std::vector<ponto>& scanDestin
 	//cria estimativa inicial...
 	//TransformType RT = icpSVD(converte_ponto_vector(scanOrigem), converte_ponto_vector(scanDestino));
 	//transformTypeToDouble(RT, estimativaInicial);
-    double limiteInferior[3] = { estimativaInicial[0] - DX,estimativaInicial[1] - DY,estimativaInicial[2] - D_ANG };
-    double limiteSuperior[3] = { estimativaInicial[0] + DY,estimativaInicial[1] + DY,estimativaInicial[2] + D_ANG };
+    double limiteInferior[3] = { std::min(estimativaInicial[1] - DX,0.0),std::min(estimativaInicial[1]  - DY,0.0),estimativaInicial[2] - D_ANG };
+    double limiteSuperior[3] = { std::min(estimativaInicial[1]+ DY,(double)m->maxLinhas) ,std::min(estimativaInicial[1] + DY,(double)m->maxColunas),estimativaInicial[2] + D_ANG };
     //ponto center_src(0, 0);
     //ponto center_dst(0, 0);
     int tamanho = scanOrigem.size();
@@ -249,5 +259,5 @@ pose psoScanMatch(std::vector<ponto>& scanOrigem, std::vector<ponto>& scanDestin
     std::cout << "\t erro = " << erro;
     if (erro < 0.0)
         throw(std::domain_error("\nO processo de otimizacao obteve um valor invalido!"));
-    return pose(x);
+    return pose(x(0), x(1), x(2));
 }

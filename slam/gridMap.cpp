@@ -132,8 +132,9 @@ void gridMap::limpa(void)
 
 inline double gridMap::incrementa(int linha, int coluna)
 {
+    const double importancia = 1.61803;
     if (pertence(linha, coluna)) {
-        mapa(linha, coluna) -= incrementoFundamental;
+        mapa(linha, coluna) -= importancia*incrementoFundamental;
         return mapa(linha, coluna);
     }
 }

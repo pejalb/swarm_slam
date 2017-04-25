@@ -6,7 +6,53 @@
 #include <cmath>
 #include <Eigen/SparseCholesky>
 #include <functional>
-#include <thread>
+
+
+inline Eigen::Matrix2d matrizDeRotacao(double angulo)
+{
+    Eigen::Matrix2d R;
+    double ct = std::cos(angulo);
+    double st = std::sin(angulo);
+    R(0, 0) = ct;
+    R(0, 1) = -st;
+    R(1, 0) = st;
+    R(1, 1) = ct;
+    return R;
+}
+
+inline Eigen::Matrix3d formaMatrizA(std::vector<pose> &poses, int i, int j)
+{
+    Eigen::Matrix3d A;
+    Eigen::Matrix2d R_i, dR_i, R_ij;
+    double ct, st;
+    R_ij = matrizDeRotacao((poses[j] - poses[i]).angulo);
+    R_i = matrizDeRotacao(poses[i].angulo);
+    ct = std::cos(poses[i].angulo);
+    st = std::sin(poses[i].angulo);
+    dR_i(0, 0) = -st; dR_i(0, 1) = -ct;
+    dR_i(1, 0) = ct; dR_i(1, 1) = -st;
+    Eigen::Vector2d t;
+    t(0) = poses[j].x - poses[i].x;
+    t(1) = poses[j].y - poses[i].y;
+    //confira o código abaixo!!!
+    A.block(0, 0, 2, 2) << -R_ij.transpose()*R_i.transpose();
+    A.block(0, 2, 2, 1) << R_ij.transpose()*dR_i.transpose()*t;
+    A.block(2, 0, 1, 2) << Eigen::Vector2d::Zero(1, 2); A(2, 2) = -1;
+    return A;
+}
+
+inline Eigen::Matrix3d formaMatrizB(std::vector<pose> & poses, int i, int j)
+{
+    Eigen::Matrix3d B;
+    Eigen::Matrix2d R_ij;
+    R_ij = matrizDeRotacao((poses[j] - poses[i]).angulo);
+    B.block(0, 0, 2, 2) << R_ij;
+    B.block(0, 2, 2, 1) << Eigen::Vector2d::Zero(2, 1);
+    B.block(2, 0, 1, 2) << Eigen::Vector2d::Zero(1, 2);
+    B(2, 2) = 1;
+    return B;
+}
+
 
 inline void transforma_vetor_pontos(std::vector<ponto>& scan, pose &p)
 {
@@ -76,8 +122,9 @@ slam::slam(int linhas, int colunas, double tamanhoCelula,bool guardaScans, bool 
     this->tamanhoCelula = tamanhoCelula;
     this->guardaScans = guardaScans;
     poses.reserve(NUM_MINIMO_POSES);
-    poses.push_back(pose(0.0, 0.0, 0.0));
+    //poses.push_back(pose(0.0, 0.0, 0.0));
     origem = pose(linhas / 2, linhas / 2, M_PI*0.5);
+    poses.push_back(origem);
     scans.reserve(NUM_MINIMO_POSES);
     //cria arquivo para armazenamento de poses
     std::ofstream arqPoses;
@@ -107,51 +154,35 @@ inline double fRestricaoPoses(Eigen::VectorXd v, std::vector<pose>& outrasPoses)
 void slam::corrige()
 {
     // monta o sistema linear
-    Eigen::SparseMatrix<double> A(poses.size(),poses.size());
-    Eigen::VectorXd dX(poses.size(),1), dY(poses.size(), 1), dAng(poses.size(), 1), x(poses.size(), 1),y(poses.size(), 1),ang(poses.size(), 1);
+    Eigen::SparseMatrix<double> H(poses.size(), poses.size());
+    //]Eigen::VectorXd dX(poses.size(),1), dY(poses.size(), 1), dAng(poses.size(), 1), x(poses.size(), 1),y(poses.size(), 1),ang(poses.size(), 1);
+    Eigen::SparseMatrix<double> b(poses.size(), 3), dX(poses.size(), 3);
     // fill A
-    A.setIdentity();
+    H.setZero();
     pose tmp;
     int i;
-
-    for ( i = 1; i < poses.size()-1; i++) {
-        tmp = poses[i + 1] - poses[i];
-        A.insert(i, i + 1)=-1;
-        dX(i) = tmp.x;
-        dY(i) = tmp.y;
-        dAng(i) = tmp.angulo;
-    }
-    
-    // fill b
-    // solve Ax = b
-    Eigen::SimplicialLDLT<Eigen::SparseMatrix<double>> solver;
-    solver.compute(A);
-    if (solver.info() != Eigen::Success) {
-        // decomposition failed
-        return;
-    }
-    x = solver.solve(dX);
-    y = solver.solve(dY);
-    ang = solver.solve(dAng);
-    // corrige as poses
-    poses.clear();
-    std::ofstream arqPoses; arqPoses.open("poses", std::ios::out | std::ios::trunc);
-    arqPoses << "\nx,y,angulo,\n";
-    poses.push_back(pose(mapa->maxLinhas / 2, mapa->maxColunas / 2, 0));
-    for (i = 1; i < scans.size(); i++) {
-        poses.push_back(poses[i-1]+pose(x(i), y(i), ang(i)));
-        arqPoses << poses[i].x << "," << poses[i].y << "," << poses[i].angulo << std::endl;
-    }
-    arqPoses.close();
-    this->mapa->limpa();
-   // int i;
-    i=0;
-    for (std::vector<std::vector<ponto> >::iterator sc = scans.begin(); sc != scans.end(); sc++) {
-        for (std::vector<ponto>::iterator it = sc->begin(); it != sc->end(); it++) {
-            ponto corrigido(((poses[i]) + (*it)));
-            mapa->marcaLinha(std::round(poses[i].x), std::round(poses[i].y), std::round(corrigido.x), std::round(corrigido.y));
+    Eigen::Matrix3d A_ij, B_ij, covMat;
+    covMat.setIdentity();
+    for (i = 1; i < poses.size() - 1; i++) {
+        for (int j = 0; j < poses.size(); j++) {
+            A_ij = formaMatrizA(poses, i, j);
+            B_ij = formaMatrizB(poses, i, j);
+            //matriz H
+            H.block<3, 3>(i, i) += (A_ij.transpose())*covMat*A_ij;
+            H.block<3, 3>(j, i) += (B_ij.transpose())*covMat*A_ij;
+            H.block<3, 3>(i, j) += (A_ij.transpose())*covMat*B_ij;
+            H.block<3, 3>(j, j) += (B_ij.transpose())*covMat*B_ij;
+            // fill b
+            tmp = poses[j] - poses[i];
+            b.block<3, 3>(i, 0) += (A_ij.transpose())*covMat*Eigen::Vector3d(tmp.x, tmp.y, tmp.angulo);
+            b.block<3, 3>(j, 0) += (B_ij.transpose())*covMat*Eigen::Vector3d(tmp.x, tmp.y, tmp.angulo);
         }
     }
+    // solve Ax = b
+    Eigen::SimplicialLDLT<Eigen::SparseMatrix<double>> solver;
+    //solver.compute(H);
+    //dX=solver.solve(b);
+    std::cout << "\nresolvi!";
 }
 void salvaWrapper (slam *s,char nome[80])
 {
@@ -165,7 +196,8 @@ void slam::atualiza(std::vector<ponto> scan,bool usaOdometria, double odoX,doubl
         scans.push_back(scan);//sem correcao, possibilitando refinamentos sucessivos, se desejado
     if (scans.size() > 1) {
         pose atual = (poses.rbegin())[0];
-        double estimativaInicial[3] = { 0.0,0.0,0.0 };
+        //double estimativaInicial[3] = { 0.0,0.0,0.0 };
+        double estimativaInicial[3] = { atual.x,atual.y,atual.angulo };
         //estimada = estimaProximaPose();
         double estimativa[3];
         if (usaOdometria) {
@@ -196,8 +228,8 @@ void slam::atualiza(std::vector<ponto> scan,bool usaOdometria, double odoX,doubl
         // poses.push_back(pose(0.5*p.x + 0.5*estimada.x, 0.5*p.y + 0.5*estimada.y, 0.5*p.angulo + 0.5*estimada.angulo));
         
         //p = pose(estimativa[0], estimativa[1], estimativa[2]);
-        anterior = poses.back();
-        p += anterior;
+        //anterior = poses.back();
+        //p += anterior;
         poses.push_back(p);
 	
         //p = (poses.rbegin())[0];
@@ -214,11 +246,13 @@ void slam::atualiza(std::vector<ponto> scan,bool usaOdometria, double odoX,doubl
     for (it = scan.begin(); it != scan.end(); it++) {        
         //std::cout << "\nALCANCE = " << MAX_ALCANCE;
         if (it->norma() <= MAX_ALCANCE) {
-			if (usaOdometria) {	
+			/*if (usaOdometria) {	
 				p+=pose(odoX,odoY,odoAng);
 				linhas<<p.x<<","<<p.y<<","<<it->x<<","<<it->y<<std::endl;
 			}
 			mapa->marcaLinha(origem.x+p.x,origem.y+ p.y,origem.x+ it->x,origem.y+ it->y);
+            linhas << p.x << "," << p.y << "," << it->x << "," << it->y << std::endl;*/
+            mapa->marcaLinha(origem.x+p.x, origem.y+ p.y, origem.x+it->x, origem.y+ it->y);
             linhas << p.x << "," << p.y << "," << it->x << "," << it->y << std::endl;
 		}
 	}

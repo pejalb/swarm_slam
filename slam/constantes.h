@@ -6,8 +6,14 @@
 #endif
 
 #ifndef M_PI
-#define M_PI (3.14159265358979323846)
+#define M_PI (3.14159265358979323846)             
 #endif
+
+#ifndef M_2PI
+#define M_2PI (6.28318530717958647692)
+#endif // !M_2PI
+
+
 
 #ifdef GRIDMAP_
 #define TAM_MAX_NOME_ARQ (80) //tamanho maximo para o nome de um arquivo de mapa
@@ -29,18 +35,19 @@
 #endif
 
 #ifdef SCAN_MATCH_
-#define DX 1.0
-#define DY 1.0
-#define D_ANG 0.25*M_PI
+#define DX 10.0
+#define DY 10.0
+#define D_ANG 0.5*M_PI
 #define ERRO_CELULA_MAPA_INICIAL 0.5
 #define ERRO_MAXIMO 100
+
 #endif
 
 #ifdef SLAM_
 //constantes inerentes ao problema
 
 #if TESTE_CSV_ == 1//caso seja um teste com arquivo csv de leituras 
-#define ESCALA (0.05)
+#define ESCALA (0.15)
 #define ESPACO_ANG A_180_GRAUS
 #define MEIO_ESPACO_ANG A_90_GRAUS
 #define LEITURAS_POR_SCAN (361)
