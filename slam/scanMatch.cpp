@@ -204,8 +204,8 @@ pose psoScanMatch(std::vector<ponto> & scanOrigem, std::vector<ponto> & scanDest
             std::bind(fobjMelhorada,_1,scanOrigem, scanDestino,idx,m);//wrapper para a fobj, requer apenas a transformacao
     std::function<double(Eigen::VectorXd)> restricao = fRestricaoPadrao;
     double erro = pso_gbest(x, objetivo, opcoes, limiteInferior, limiteSuperior, restricao);
-    while (!m->pertence(x(0),x(1)))
-        double erro = pso_gbest(x, objetivo, opcoes, limiteInferior, limiteSuperior, restricao);
+    //while (!m->pertence(x(0),x(1)))
+     //   double erro = pso_gbest(x, objetivo, opcoes, limiteInferior, limiteSuperior, restricao);
     std::cout << "\t erro = " << erro<<std::endl;
     if (erro < 0)
         throw (std::domain_error("\nO processo de otimizacao obteve um valor invalido!"));    

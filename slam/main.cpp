@@ -110,7 +110,8 @@ int main()
 		int i = 0;
 		for (i = 0; i < leituras.size(); i++) {
 			std::cout << "\nIteracao " << i;
-                s.atualiza(leituras.at(i),false,0.0,0.0,0.0,arqLinhas);
+            s.atualiza(leituras.at(i),false,0.0,0.0,0.0,arqLinhas);
+            if((i % 100 ==0) && (i>0))
                 s.corrige();//debugging....a frequencia deve ser um pouco menor na pratica
 		}
 	}

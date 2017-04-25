@@ -24,9 +24,10 @@ class slam {
         //passo estimado entre poses
         pose vel;
         pose estimaProximaPose(void);
+        bool redesenha;
     public:
         slam();//ctor padrao
-        slam(int linhas, int colunas,double tamanhoCelula,bool guardaScans=true,bool usaLogOdds = true, double probPrior = 0.5, double probOcc = 0.9, double probFree = 0.1);
+        slam(int linhas, int colunas,double tamanhoCelula,bool guardaScans=true,bool usaLogOdds = true, double probPrior = 0.5, double probOcc = 0.9, double probFree = 0.1,bool redesenha=true);
         ~slam();//dtor padrao
         //atualizacao
 	//void atualiza(std::vector<ponto> scan, bool usaOdometria = false,
