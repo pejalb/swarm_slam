@@ -157,7 +157,7 @@ pose psoScanMatch(std::vector<ponto> & scanOrigem, std::vector<ponto> & scanDest
     opcoes.modoDeConfinamento = BLOQUEIO;
     opcoes.normalizaValores = false;
     double estimativaSVD[3];
-    opcoes.numParticulas = 50;
+    opcoes.numParticulas = 100;
     opcoes.velMax = 0.05;
     opcoes.tolerancia = 0.1;
 	//se desejado pode criar uma estimativa
@@ -216,8 +216,8 @@ pose psoScanMatch(std::vector<ponto>& scanOrigem, std::vector<ponto>& scanDestin
     opcoes.numDimensoes = 3;
     opcoes.modoDeConfinamento = BLOQUEIO;
     opcoes.normalizaValores = false;
-    opcoes.numParticulas = 50;
-    opcoes.velMax = 0.5;
+    opcoes.numParticulas = 100;
+    opcoes.velMax = 0.05;
     opcoes.tolerancia = 1;
 	//cria estimativa inicial...
 	//TransformType RT = icpSVD(converte_ponto_vector(scanOrigem), converte_ponto_vector(scanDestino));
