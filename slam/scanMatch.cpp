@@ -147,9 +147,9 @@ pose psoScanMatch(std::vector<ponto> & scanOrigem, std::vector<ponto> & scanDest
     //double *limiteSuperior, double (*fConversao)(double *), double(*fRestricao)(VectorXd))*/,
     Eigen::VectorXd x;// = Eigen::VectorXd::Zero(3, 1);
     opcoesPSO opcoes;
-    opcoes.coefCognitivo = 0.7;
-    opcoes.coefInercia = 0.9;
-    opcoes.coefSocial = 0.7;
+    opcoes.coefCognitivo = 0.497;
+    opcoes.coefInercia = 1.398;
+    opcoes.coefSocial = 0.669;
     opcoes.limitaVelocidade = true;
     opcoes.maxIter = 100;
     opcoes.numDimensoes = 3;
@@ -170,8 +170,10 @@ pose psoScanMatch(std::vector<ponto> & scanOrigem, std::vector<ponto> & scanDest
         return pose(estimativaSVD[0], estimativaSVD[1], estimativaSVD[2]);
     //se a estimativa estiver muito distante...
     //use pso para aproximar mais
-    double limiteInferior[3] = { estimativaInicial[1] + estimativaSVD[0] - DX,estimativaInicial[1] + estimativaSVD[1] - DY,estimativaInicial[2] - D_ANG };
-    double limiteSuperior[3] = { estimativaInicial[1] + estimativaSVD[0] + DY,estimativaInicial[1] + estimativaSVD[1] + DY,estimativaInicial[2] + D_ANG };
+    //double limiteInferior[3] = { estimativaInicial[1] + estimativaSVD[0] - DX,estimativaInicial[1] + estimativaSVD[1] - DY,estimativaInicial[2] - D_ANG };
+    //double limiteSuperior[3] = { estimativaInicial[1] + estimativaSVD[0] + DY,estimativaInicial[1] + estimativaSVD[1] + DY,estimativaInicial[2] + D_ANG };
+    double limiteInferior[3] = { estimativaInicial[1] - DX,estimativaInicial[1] - DY,estimativaInicial[2] - D_ANG };
+    double limiteSuperior[3] = { estimativaInicial[1] + DY,estimativaInicial[1] + DY,estimativaInicial[2] + D_ANG };
     //ponto center_src(0, 0);
     //ponto center_dst(0, 0);
    // int tamanho = scanOrigem.size();
@@ -193,7 +195,7 @@ pose psoScanMatch(std::vector<ponto> & scanOrigem, std::vector<ponto> & scanDest
             std::bind(fobjMelhorada,_1,scanOrigem, scanDestino,idx,m);//wrapper para a fobj, requer apenas a transformacao
     std::function<double(Eigen::VectorXd)> restricao = fRestricaoPadrao;
     double erro = pso_gbest(x, objetivo, opcoes, limiteInferior, limiteSuperior, restricao);
-    std::cout << "\t erro = " << erro;
+    std::cout << "\t erro = " << erro<<std::endl;
     if (erro < 0)
         throw (std::domain_error("\nO processo de otimizacao obteve um valor invalido!"));
     return pose(x);

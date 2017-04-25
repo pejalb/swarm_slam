@@ -120,6 +120,7 @@ int main()
 //			s.atualiza(cria_scan_de_teste());
 //		}
 //	}	
+    arqLinhas.close();
     return 0;
-	arqLinhas.close();
+	
 }
