@@ -166,6 +166,7 @@ void slam::corrige()
     Eigen::SparseVector<double> b(3 * poses.size()),dX(3 * poses.size());
     bool primeira = true;
     double max1, max2; max1 = max2 = 0.0;
+    int maxIter = 10;
     do {
         max2 = max1;
         // fill A
@@ -226,7 +227,7 @@ void slam::corrige()
             if (dX.coeff(i) > max1)
                 max1 = dX.coeff(i + 1);
         }
-    } while (!PROXIMOS(max1, max2, TOL));
+    } while (!PROXIMOS(max1, max2, TOL) && maxIter--);
     std::cout << "\nresolvi!";
     if (redesenha) {
         mapa->limpa();
