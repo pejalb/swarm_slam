@@ -142,7 +142,7 @@ slam::slam(int linhas, int colunas, double tamanhoCelula,bool guardaScans, bool 
 
 slam::~slam()
 {
-    //this->corrige();
+    this->corrige();
     this->mapa->salva("mapaFinal");
     delete mapa;
 }
@@ -166,7 +166,7 @@ void slam::corrige()
     Eigen::SparseVector<double> b(3 * poses.size()),dX(3 * poses.size());
     bool primeira = true;
     double max1, max2; max1 = max2 = 0.0;
-    int maxIter = 10;
+    int maxIter = 3;
     do {
         max2 = max1;
         // fill A
@@ -179,6 +179,10 @@ void slam::corrige()
         covMat.setIdentity();
         for (i = 0; i < poses.size() - 2; i++) {
             for (int j = 0; j < poses.size() - 2; j++) {
+				if (i != j)
+					tmp = poses[j] - poses[i];
+				else
+					tmp = pose(0, 0, 0);
                 A_ij = formaMatrizA(poses, i, j);
                 B_ij = formaMatrizB(poses, i, j);
                 //matriz H
@@ -230,6 +234,7 @@ void slam::corrige()
     } while (!PROXIMOS(max1, max2, TOL) && maxIter--);
     std::cout << "\nresolvi!";
     if (redesenha) {
+		std::ofstream linhas; linhas.open("linhas", std::ios::out | std::ios::trunc);
         mapa->limpa();
         std::vector<std::vector<ponto> >::iterator scan;
         std::vector<pose>::iterator p = poses.begin();
@@ -245,10 +250,12 @@ void slam::corrige()
                     mapa->marcaLinha(origem.x+p.x,origem.y+ p.y,origem.x+ it->x,origem.y+ it->y);
                     linhas << p.x << "," << p.y << "," << it->x << "," << it->y << std::endl;*/
                     mapa->marcaLinha(origem.x + p->x, origem.y + p->y, origem.x + it->x, origem.y + it->y);
+					linhas << p->x << "," << p->y << "," << it->x << "," << it->y << std::endl;
                 }
             }
         }
-    }
+		linhas.close();
+	}
 }
 void salvaWrapper (slam *s,char nome[80])
 {
