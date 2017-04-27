@@ -1,7 +1,7 @@
 #ifndef MODELO_MOVIMENTO
 #define MODELO_MOVIMENTO
 #include "modelo_movimento_base.h"
-#include <Eigen\Dense>
+#include <Eigen/Dense>
 
 /*O tipo tipoVetor deve possuir operadores que permitam o acesso as suas componentes individualmente, de modo similar ao que se da com 
 vetores padrao em C++. Alem disso, assume-se que as operacoes de soma, diferenca, comparacao e atribuicao estejam definidas pelos operadores usuais
@@ -19,7 +19,7 @@ class modeloMovimento: public modeloMovimentoBase<Eigen::Vector3d, Eigen::Vector
 		void mudaPasso(double novoDt);
 		void definePose(Eigen::Vector3d novaPose);
 		Eigen::Vector3d atualizaPosicao(Eigen::Vector2d velocidade);//vt,w
-		
+		const Eigen::Vector3d retornaIncerteza(void);//por padrao 1-sigma
 };
 #endif
 
