@@ -1,34 +1,43 @@
 #include "modelo_movimento.h"
-template< class tipoVetor, class tipoMatriz, unsigned int dim>
-modeloMovimento<tipoVetor,tipoMatriz,dim>::modeloMovimento()
+#include <cmath>
+
+
+modeloMovimento::modeloMovimento()
 {
-	//inicializa a posicao
-	for (size_t i = 0; i < dim; i++){
-		poseRobo[i] = 0.0;//cada elemento da posica
-		for (size_t j = 0; j < dim; j++){
-			covariancias(i,j) = 0.0;
-		}
-	}
-	//inicializa a matriz padrao de covariancias
-	
+	poseRobo.setZero();
+	padraoCov.setIdentity();
 }
-template< class tipoVetor, class tipoMatriz, unsigned int dim>
-inline modeloMovimento<tipoVetor,tipoMatriz,dim>::modeloMovimento(tipoVetor poseInicial)
+
+inline modeloMovimento::modeloMovimento(Eigen::Vector3d poseInicial)
 {
 	poseRobo = poseInicial;
 }
 
-template< class tipoVetor, class tipoMatriz, unsigned int dim>
-tipoVetor modeloMovimento<tipoVetor,tipoMatriz,dim>::posicao()
+Eigen::Vector3d modeloMovimento::posicao()
 {
 	return poseRobo;
 }
 
-template< class tipoVetor, class tipoMatriz, unsigned int dim>
-tipoVetor modeloMovimento<tipoVetor, tipoMatriz, dim>::atualizaPosicao(tipoVetor velocidade)
+void modeloMovimento::mudaPasso(double novoDt)
 {
-	poseRobo += velocidade;
-	//se nao for passada matriz de variancias da velocidade, assume uma covariancia padrao.
+	dt = novoDt;
+}
 
+void modeloMovimento::definePose(Eigen::Vector3d novaPose)
+{
+	poseRobo = novaPose;
+	covariancias.setIdentity();
+}
+
+Eigen::Vector3d modeloMovimento::atualizaPosicao(Eigen::Vector2d velocidade)
+{
+	//pose [0] = x,pose[1]=y,pose[3] = angulo
+	double razao = -velocidade[0] / velocidade[1];// v / w
+	poseRobo[0] = poseRobo[0] + razao*(-std::sin(poseRobo[3])+std::sin(poseRobo[3]+velocidade[1]*dt));
+	poseRobo[1] = poseRobo[1] + razao*(std::cos(poseRobo[3]) - std::cos(poseRobo[3] + velocidade[1] * dt));
+	poseRobo[2] = poseRobo[2] + velocidade[1] * dt;
+
+	//se nao for passada matriz de variancias da velocidade, assume uma covariancia padrao.
+	covariancias += padraoCov;
 	return poseRobo;
 }
