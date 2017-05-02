@@ -50,7 +50,7 @@
 #define ESCALA (0.15)
 #define ESPACO_ANG A_180_GRAUS
 #define MEIO_ESPACO_ANG A_90_GRAUS
-#define LEITURAS_POR_SCAN (361)
+#define LEITURAS_POR_SCAN (181)
 //numero minimo de poses cujo armazenamento e garantido
 #define NUM_MINIMO_POSES (700)
 #define SCANS_DE_TESTE (0)
