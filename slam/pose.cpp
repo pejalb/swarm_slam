@@ -73,10 +73,9 @@ pose pose::operator!(void)
     return resultado - (*this);
 }
 
-ponto pose::operator+(const ponto & rhs)
+ponto operator+(const pose &lhs, ponto rhs)
 {
-    ponto resultado(0, 0);
-    resultado.x = x + rhs.x*std::cos(angulo) - rhs.y*std::sin(angulo);
-    resultado.y = y + rhs.x*std::sin(angulo) + rhs.y*std::cos(angulo);
-    return resultado;
+    rhs.x = lhs.x + rhs.x*std::cos(lhs.angulo) - rhs.y*std::sin(lhs.angulo);
+    rhs.y = lhs.y + rhs.x*std::sin(lhs.angulo) + rhs.y*std::cos(lhs.angulo);
+    return rhs;
 }

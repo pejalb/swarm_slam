@@ -23,9 +23,9 @@ ponto ponto::operator=(const ponto & rhs)
     return ponto(rhs);
 }
 
-ponto ponto::operator+(const ponto & a)
+ponto ponto::operator+(ponto rhs)
 {
-    return ponto(x+a.x,y+a.y);
+    return rhs+=(*this);
 }
 
 ponto &ponto::operator+=(const ponto & rhs)
@@ -35,9 +35,9 @@ ponto &ponto::operator+=(const ponto & rhs)
     return *this;
 }
 
-ponto ponto::operator-(const ponto & a)
+ponto ponto::operator-(ponto rhs)
 {
-    return ponto(x-a.x,y-a.y);
+    return rhs-=(*this);
 }
 
 ponto & ponto::operator-=(const ponto & rhs)
@@ -47,12 +47,12 @@ ponto & ponto::operator-=(const ponto & rhs)
     return *this;
 }
 
-ponto ponto::operator/(const double & rhs)
+ponto ponto::operator/(double rhs)
 {
     return ponto(x/rhs,y/rhs);
 }
 
-ponto & ponto::operator/=(const double & rhs)
+ponto & ponto::operator/=(double rhs)
 {
     x /= rhs;
     y /= rhs;
