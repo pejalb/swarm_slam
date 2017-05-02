@@ -168,7 +168,7 @@ pose psoScanMatch(std::vector<ponto> & scanOrigem, std::vector<ponto> & scanDest
     double estimativaSVD[3];
     opcoes.numParticulas = 100;
     opcoes.velMax = 0.05;
-    opcoes.tolerancia = 0.01;
+    opcoes.tolerancia = 0.1;
 	//se desejado pode criar uma estimativa
 	TransformType RT = icpSVD(converte_ponto_vector(scanOrigem), converte_ponto_vector(scanDestino));
 	transformTypeToDouble(RT, estimativaSVD);

@@ -141,7 +141,7 @@ slam::slam(int linhas, int colunas, double tamanhoCelula,bool guardaScans, bool 
 
 slam::~slam()
 {
-    this->corrige();
+    //this->corrige();
     this->mapa->salva("mapaFinal");
     delete mapa;
 }
@@ -331,14 +331,14 @@ void slam::atualiza(std::vector<ponto> scan,bool usaOdometria, double odoX,doubl
 		}
 	}
     static int numScans = 0;   
-	if (numScans % 10==0) {
+	if (numScans % 1000==0) {
 		char s[80];
 		std::sprintf(s, "mapa%d", numScans);
 		mapa->salva(s);
 	} 
 	numScans++;
     std::ofstream arqPoses; arqPoses.open("poses", std::ios::out | std::ios::app);
-    arqPoses << p.x << "," << p.y << "," << p.angulo << std::endl;
+    arqPoses << poseRobo.x << "," << poseRobo.y << "," << poseRobo.angulo << std::endl;
     //std::cout << poses.back().x << "," << poses.back().y << "," << poses.back().angulo << std::endl;
     arqPoses.close();
     //scans x (sistema local)

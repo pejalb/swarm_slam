@@ -35,9 +35,9 @@
 #endif
 
 #ifdef SCAN_MATCH_
-#define DX 10.0
-#define DY 10.0
-#define D_ANG 0.5*M_PI
+#define DX 1.0
+#define DY 1.0
+#define D_ANG 0.25*M_PI
 #define ERRO_CELULA_MAPA_INICIAL 0.5
 #define ERRO_MAXIMO 100
 
@@ -47,7 +47,7 @@
 //constantes inerentes ao problema
 
 #if TESTE_CSV_ == 1//caso seja um teste com arquivo csv de leituras 
-#define ESCALA (0.15)
+#define ESCALA (0.1)
 #define ESPACO_ANG A_180_GRAUS
 #define MEIO_ESPACO_ANG A_90_GRAUS
 #define LEITURAS_POR_SCAN (181)

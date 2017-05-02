@@ -119,7 +119,7 @@ int main()
 {
     //std::cout << "\nEscala = " << ESCALA;
 	//slam s(1000, 1000, ESCALA); 
-    slam s(1000, 1000, ESCALA, true, true, 0.5, 0.9);
+    slam s(2000, 2000, ESCALA, true, true, 0.5, 0.9);
 	std::ofstream arqLinhas; arqLinhas.open("linhas", std::ios::out | std::ios::trunc);
 	//teste de funcionamento...
 #if TESTE_MOBILE_SIM_==1
@@ -135,7 +135,10 @@ int main()
 		paraCoordenadasCartesianas(r,bear,leituras);
 		std::ofstream arqLinhas; arqLinhas.open("linhas",std::ios::out | std::ios::trunc);
 		int i = 0;
-		for (i = 0; i < leituras.size(); i++) {
+		int tam = leituras.size();
+		tam = tam < odo.size() ? tam : odo.size();
+		tam = tam < bear.size() ? tam : bear.size();
+		for (i = 0; i < tam; i++) {
 			std::cout << "\nIteracao " << i;
             s.atualiza(leituras.at(i),true,odo[i][0],odo[i][1],odo[i][2],arqLinhas);
             //if((i % 100 ==0) && (i>0))
