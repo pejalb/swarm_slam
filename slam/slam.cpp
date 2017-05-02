@@ -283,7 +283,7 @@ void slam::atualiza(std::vector<ponto> scan,bool usaOdometria, double odoX,doubl
             estimativa[2] = estimada.angulo;
         }
         try {
-            p = psoScanMatch(scans.rbegin()[1], scan, estimativaInicial,mapa);
+            p = psoScanMatch(scans.rbegin()[1], scan, estimativa,mapa);
             //p = psoScanMatch(scans.rbegin()[1], scan, estimativa, mapa);
             poses.push_back(p);
             //p = psoScanMatch(scan, scans.rbegin()[0], estimativa,
@@ -302,7 +302,7 @@ void slam::atualiza(std::vector<ponto> scan,bool usaOdometria, double odoX,doubl
         //p = pose(estimativa[0], estimativa[1], estimativa[2]);
         //anterior = poses.back();
         //p += anterior;
-        poses.push_back(p);
+        //poses.push_back(p);
 	
         //p = (poses.rbegin())[0];
     }
@@ -310,30 +310,31 @@ void slam::atualiza(std::vector<ponto> scan,bool usaOdometria, double odoX,doubl
         p = (poses.rbegin())[0];// p.x /= tamanhoCelula; p.y /= tamanhoCelula;
     
     // int i;
-    std::vector<ponto>::iterator it = scan.begin();
+    //std::vector<ponto>::iterator it = scan.begin();
     transforma_vetor_pontos(scan, p);
 	//transforma_vetor_pontos(scan, p + origem);
     scans.pop_back();
     scans.push_back(scan);
-    for (it = scan.begin(); it != scan.end(); it++) {        
-        //std::cout << "\nALCANCE = " << MAX_ALCANCE;
-        if (it->norma() <= MAX_ALCANCE) {
-			/*if (usaOdometria) {	
+	BOOST_FOREACH(ponto pto, scan) {
+		//std::cout << "\nALCANCE = " << MAX_ALCANCE;
+		if (pto.norma() <= MAX_ALCANCE) {
+			/*if (usaOdometria) {
 				p+=pose(odoX,odoY,odoAng);
 				linhas<<p.x<<","<<p.y<<","<<it->x<<","<<it->y<<std::endl;
 			}
 			mapa->marcaLinha(origem.x+p.x,origem.y+ p.y,origem.x+ it->x,origem.y+ it->y);
-            linhas << p.x << "," << p.y << "," << it->x << "," << it->y << std::endl;*/
-            mapa->marcaLinha(origem.x+p.x, origem.y+ p.y, origem.x+it->x, origem.y+ it->y);
-            linhas << p.x << "," << p.y << "," << it->x << "," << it->y << std::endl;
+			linhas << p.x << "," << p.y << "," << it->x << "," << it->y << std::endl;*/
+			mapa->marcaLinha(origem.x + p.x, origem.y + p.y, pto.x, pto.y);
+			linhas << p.x << "," << p.y << "," << pto.x << "," << pto.y << std::endl;
 		}
 	}
-   /* static int numScans = 0;   
-    if (numScans % 10==0) {
-        char s[80];
-        std::sprintf(s, "mapa%d", numScans++);
-        mapa->salva(s);
-    }    */
+    static int numScans = 0;   
+	if (numScans % 10==0) {
+		char s[80];
+		std::sprintf(s, "mapa%d", numScans);
+		mapa->salva(s);
+	} 
+	numScans++;
     std::ofstream arqPoses; arqPoses.open("poses", std::ios::out | std::ios::app);
     arqPoses << poses.back().x << "," << poses.back().y << "," << poses.back().angulo << std::endl;
     //std::cout << poses.back().x << "," << poses.back().y << "," << poses.back().angulo << std::endl;

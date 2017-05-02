@@ -138,8 +138,8 @@ int main()
 		for (i = 0; i < leituras.size(); i++) {
 			std::cout << "\nIteracao " << i;
             s.atualiza(leituras.at(i),true,odo[i][0],odo[i][1],odo[i][2],arqLinhas);
-            if((i % 100 ==0) && (i>0))
-                s.corrige();//debugging....a frequencia deve ser um pouco menor na pratica
+            //if((i % 100 ==0) && (i>0))
+            //    s.corrige();//debugging....a frequencia deve ser um pouco menor na pratica
 		}
 	}
 //	else {
