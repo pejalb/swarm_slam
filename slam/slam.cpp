@@ -74,14 +74,12 @@ inline ponto slam::paraCoordenadasMapa(double x, double y)
 }
 inline ponto slam::paraCoordenadasMapa(ponto &p)
 {
-	p.x = p.x / tamanhoCelula;
-	p.y = p.y / tamanhoCelula;
-	return ponto(p.x,p.y);
+	return p / tamanhoCelula;
 }
 inline void slam::paraCoordenadasMapaVector(std::vector<ponto> &scan)
 {
-	for (std::vector<ponto>::iterator i = scan.begin(); i != scan.end(); i++){
-		paraCoordenadasMapa(*i);
+	BOOST_FOREACH(ponto &p, scan) {
+		paraCoordenadasMapa(p);
 	}
 }
 void slam::estimaVelocidade(int numPoses)
