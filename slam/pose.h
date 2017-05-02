@@ -19,5 +19,6 @@ class pose : public ponto {
         pose operator! (void);//retorna a "pose relativa" inversa e.g:!Dab=Dba
         //composicao de poses e pontos
         friend ponto operator+(const pose &lhs,ponto rhs);
+		friend ponto operator+(ponto lhs,const pose &rhs);
 };
 #endif

@@ -315,6 +315,7 @@ void slam::atualiza(std::vector<ponto> scan,bool usaOdometria, double odoX,doubl
 	//transforma_vetor_pontos(scan, p + origem);
     scans.pop_back();
     scans.push_back(scan);
+	pose poseRobo = origem + p;//global
 	BOOST_FOREACH(ponto pto, scan) {
 		//std::cout << "\nALCANCE = " << MAX_ALCANCE;
 		if (pto.norma() <= MAX_ALCANCE) {
@@ -324,8 +325,9 @@ void slam::atualiza(std::vector<ponto> scan,bool usaOdometria, double odoX,doubl
 			}
 			mapa->marcaLinha(origem.x+p.x,origem.y+ p.y,origem.x+ it->x,origem.y+ it->y);
 			linhas << p.x << "," << p.y << "," << it->x << "," << it->y << std::endl;*/
-			mapa->marcaLinha(origem.x + p.x, origem.y + p.y, pto.x, pto.y);
-			linhas << p.x << "," << p.y << "," << pto.x << "," << pto.y << std::endl;
+			ponto tmp = origem + pto;
+			mapa->marcaLinha(poseRobo.x + p.x, poseRobo.y + p.y, tmp.x, tmp.y);
+			linhas << poseRobo.x << "," << poseRobo.y << "," << tmp.x << "," << tmp.y << std::endl;
 		}
 	}
     static int numScans = 0;   
@@ -336,7 +338,7 @@ void slam::atualiza(std::vector<ponto> scan,bool usaOdometria, double odoX,doubl
 	} 
 	numScans++;
     std::ofstream arqPoses; arqPoses.open("poses", std::ios::out | std::ios::app);
-    arqPoses << poses.back().x << "," << poses.back().y << "," << poses.back().angulo << std::endl;
+    arqPoses << p.x << "," << p.y << "," << p.angulo << std::endl;
     //std::cout << poses.back().x << "," << poses.back().y << "," << poses.back().angulo << std::endl;
     arqPoses.close();
     //scans x (sistema local)
