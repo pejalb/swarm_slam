@@ -5,6 +5,7 @@
 #include <iostream>
 #include <cmath>
 #include <Eigen/SparseCholesky>
+#include <boost/foreach.hpp>
 #include <functional>
 #define ABS(x) ((x)>=0)?(x):(-x)
 #define TOL 1e-3
@@ -62,8 +63,8 @@ inline Eigen::Matrix3d formaMatrizB(std::vector<pose> & poses, int i, int j)
 
 inline void transforma_vetor_pontos(std::vector<ponto>& scan, pose &p)
 {
-    for (int i = 0; i < scan.size(); i++) {
-        scan[i] = p + scan[i];
+    BOOST_FOREACH(ponto &pto, scan){
+		pto = p + pto;
     }
 }
 
