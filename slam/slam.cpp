@@ -63,12 +63,7 @@ inline Eigen::Matrix3d formaMatrizB(std::vector<pose> & poses, int i, int j)
 }
 
 
-inline void transforma_vetor_pontos(std::vector<ponto>& scan, pose &p)
-{
-    BOOST_FOREACH(ponto &pto, scan){
-		pto = p + pto;
-    }
-}
+
 
 inline ponto slam::paraCoordenadasMapa(double x, double y)
 {

@@ -2,6 +2,7 @@
 #define POSE
 #include "ponto.h"
 #include <Eigen/Dense>
+#include <vector>
 
 class pose : public ponto {    
     public :
@@ -21,4 +22,7 @@ class pose : public ponto {
         friend ponto operator+(const pose &lhs,ponto rhs);
 		friend ponto operator+(ponto lhs,const pose &rhs);
 };
+
+inline void transforma_vetor_pontos(std::vector<ponto>& scan, pose &p);
+
 #endif

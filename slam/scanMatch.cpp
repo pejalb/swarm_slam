@@ -84,6 +84,15 @@ PointsType converte_ponto_vector(std::vector <ponto> &pontos)
 	return p;
 }
 
+std::vector<ponto> vetor_pontos_transformado(std::vector<ponto>& scan, pose &p)
+{
+	std::vector<ponto> novoScan; novoScan.reserve(scan.size());
+	BOOST_FOREACH(ponto &pto, scan) {
+		novoScan.push_back(p + pto);
+	}
+	return novoScan;
+}
+
 void transformTypeToDouble(TransformType &RT, double*x, int tamanho = 3)
 {
 	x[0] = (RT.second)[0];
@@ -100,28 +109,41 @@ Eigen::Transform<double, 2, Eigen::Affine> cria_transformacao(double angulo, dou
     return T;
 }
 
-ponto pontoMedio(std::vector<ponto> &scan)
+double media(std::vector<double> &scan)
 {
-	ponto pm;
-	BOOST_FOREACH(ponto p, scan) {
-		pm += p;
+	double m = 0.0;
+	BOOST_FOREACH(double r, scan) {
+		m += r;
 	}
-	return pm / (double)scan.size();
+	return m / (double)scan.size();
 }
 
-double pearsonR2(std::vector<ponto> &scan1, std::vector<ponto> &scan2)
+double pearsonR(std::vector<ponto> &scan1, std::vector<ponto> &scan2)
 {
 	//a ordem carrega implicitamente a nocao de direcao...
 	std::vector<double> scan1Mod;
 	std::vector<double> scan2Mod;
-	ponto pm1 = pontoMedio(scan1);
-
-	ponto pm2 = pontoMedio(scan2);
-	ponto pr;
 	int tam = std::min(scan1.size(), scan2.size());
-	for (int i = 0; i < tam; i++) {
-		pr+=scan[1]-pm1
+	int i;
+
+	for (i = 0; i < tam; i++){
+		scan1Mod[i] = scan1[i].norma();
+		scan2Mod[i] = scan2[i].norma();
 	}
+
+	double m1 = media(scan1Mod);
+	double m2 = media(scan2Mod);
+
+	double r, acc1, acc2,acc3;
+	r = acc1 = acc2 = acc3 = 0.0;
+	
+	for (i = 0; i < tam; i++) {
+		acc1 += (scan1Mod[i] - m1)*(scan2Mod[i] - m2);
+		acc2 += std::pow(scan1Mod[i] - m1, 2);
+		acc3+=std::pow(scan2Mod[i] - m2, 2);
+	}
+	r = acc1 / (std::sqrt(acc2*acc3));
+	return r;
 }
 
 double fobj(Eigen::VectorXd v,std::vector<ponto> & scanOrigem, std::vector<ponto> & scanDestino, std::vector<std::vector<size_t> > &idx)
@@ -133,21 +155,24 @@ double fobj(Eigen::VectorXd v,std::vector<ponto> & scanOrigem, std::vector<ponto
     //double query[2] = { scanOrigem[0].x,scanOrigem[0].y };
     //std::vector<std::vector<size_t> > idx=constroiKDtree<double>(cloud, scanOrigem,1);
     int numPontos = idx.size();
+	std::vector<ponto> novoScanOrigem = vetor_pontos_transformado(scanOrigem, p);
     for (size_t i = 0; i < numPontos; i+=1){
         for (size_t j = 0; j < idx[i].size(); j++){
-            erro += (scanDestino[idx[i][j]] - (p + scanOrigem[i])).quadradoNorma();
+            erro += (scanDestino[idx[i][j]] - novoScanOrigem[i]).quadradoNorma();
         }        
     }
     //std::cout << "\nerro = " << erro << std::endl;
-    return std::sqrt(erro/((double)numPontos));
+	
+	double r = pearsonR(scanDestino,novoScanOrigem);
+    return std::sqrt(erro/((double)numPontos*std::abs(r)));
 }
 
 double fobjMelhorada(Eigen::VectorXd v, std::vector<ponto> & scanOrigem, std::vector<ponto> & scanDestino, std::vector<std::vector<size_t> > &idx, gridMap *m)
 {
     pose p(v);
     int numPontos = scanOrigem.size();
-    int maxLin = m->maxLinhas /10;
-    int maxCol = m->maxColunas /10;
+    //int maxLin = m->maxLinhas /10;
+    //int maxCol = m->maxColunas /10;
     transforma_vetor_pontos(scanOrigem, p);
     double erro =fobj(v,scanOrigem,scanDestino,idx);
     double diffMapa = 0.0;

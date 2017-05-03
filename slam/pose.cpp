@@ -1,5 +1,6 @@
 #include "pose.h"
 #include <cmath>
+#include <boost/foreach.hpp>
 pose::pose():ponto()
 {
     angulo = 0.0;
@@ -85,4 +86,11 @@ ponto operator+(ponto lhs, const pose & rhs)
 	lhs.x = rhs.x + lhs.x*std::cos(rhs.angulo) - lhs.y*std::sin(rhs.angulo);
 	lhs.y = rhs.y + lhs.x*std::sin(rhs.angulo) + lhs.y*std::cos(rhs.angulo);
 	return lhs;
+}
+
+inline void transforma_vetor_pontos(std::vector<ponto>& scan, pose &p)
+{
+	BOOST_FOREACH(ponto &pto, scan) {
+		pto = p + pto;
+	}
 }
