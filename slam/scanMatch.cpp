@@ -6,6 +6,7 @@
 #include <functional>
 #include <cmath>
 #include "pointcloud_kd_tree.h"
+#include <boost/foreach.hpp>
 #include <iostream>//debugging
 using namespace nanoflann;
 
@@ -99,6 +100,30 @@ Eigen::Transform<double, 2, Eigen::Affine> cria_transformacao(double angulo, dou
     return T;
 }
 
+ponto pontoMedio(std::vector<ponto> &scan)
+{
+	ponto pm;
+	BOOST_FOREACH(ponto p, scan) {
+		pm += p;
+	}
+	return pm / (double)scan.size();
+}
+
+double pearsonR2(std::vector<ponto> &scan1, std::vector<ponto> &scan2)
+{
+	//a ordem carrega implicitamente a nocao de direcao...
+	std::vector<double> scan1Mod;
+	std::vector<double> scan2Mod;
+	ponto pm1 = pontoMedio(scan1);
+
+	ponto pm2 = pontoMedio(scan2);
+	ponto pr;
+	int tam = std::min(scan1.size(), scan2.size());
+	for (int i = 0; i < tam; i++) {
+		pr+=scan[1]-pm1
+	}
+}
+
 double fobj(Eigen::VectorXd v,std::vector<ponto> & scanOrigem, std::vector<ponto> & scanDestino, std::vector<std::vector<size_t> > &idx)
 {
 	//std::cout << "\nv =" << v(0) << "," << v(1) << "," << v(2)<<std::endl;//debugging -nan(ind)
@@ -155,7 +180,7 @@ pose psoScanMatch(std::vector<ponto> & scanOrigem, std::vector<ponto> & scanDest
     //centro_scanDestino /= (double)numPontos;
     ///*double pso_gbest(VectorXd &x, double(*fobj)(VectorXd,...), opcoesPSO &opcoes, double *limiteInferior,
     //double *limiteSuperior, double (*fConversao)(double *), double(*fRestricao)(VectorXd))*/,
-    Eigen::VectorXd x;// = Eigen::VectorXd::Zero(3, 1);
+    Eigen::VectorXd x,x1,x2;// = Eigen::VectorXd::Zero(3, 1);
     opcoesPSO opcoes;
     opcoes.coefCognitivo = 0.497;
     opcoes.coefInercia = 1.398;
@@ -179,8 +204,6 @@ pose psoScanMatch(std::vector<ponto> & scanOrigem, std::vector<ponto> & scanDest
         return pose(estimativaSVD[0], estimativaSVD[1], estimativaSVD[2]);
     //se a estimativa estiver muito distante...
     //use pso para aproximar mais m->
-    double limiteInferior[3] = { std::min(estimativaInicial[1] + estimativaSVD[0] - DX,0.0),std::min(estimativaInicial[1] + estimativaSVD[1] - DY,0.0),estimativaInicial[2] - D_ANG };
-    double limiteSuperior[3] = { std::min(estimativaInicial[1] + estimativaSVD[0] + DY,(double)m->maxLinhas) ,std::min(estimativaInicial[1] + estimativaSVD[1] + DY,(double)m->maxColunas),estimativaInicial[2] + D_ANG };
     //double limiteInferior[3] = { estimativaInicial[1] - DX,estimativaInicial[1] - DY,estimativaInicial[2] - D_ANG };
     //double limiteSuperior[3] = { estimativaInicial[1] + DY,estimativaInicial[1] + DY,estimativaInicial[2] + D_ANG };
     //ponto center_src(0, 0);
@@ -203,7 +226,26 @@ pose psoScanMatch(std::vector<ponto> & scanOrigem, std::vector<ponto> & scanDest
     std::function<double(Eigen::VectorXd)> objetivo =
             std::bind(fobjMelhorada,_1,scanOrigem, scanDestino,idx,m);//wrapper para a fobj, requer apenas a transformacao
     std::function<double(Eigen::VectorXd)> restricao = fRestricaoPadrao;
-    double erro = pso_gbest(x, objetivo, opcoes, limiteInferior, limiteSuperior, restricao);
+	
+	
+	double limiteInferior[3] = { std::min(estimativaInicial[1] + estimativaSVD[0] - DX,0.0),std::min(estimativaInicial[1] + estimativaSVD[1] - DY,0.0),estimativaInicial[2] - D_ANG };
+	double limiteSuperior[3] = { std::min(estimativaInicial[1] + estimativaSVD[0] + DY,(double)m->maxLinhas) ,std::min(estimativaInicial[1] + estimativaSVD[1] + DY,(double)m->maxColunas),estimativaInicial[2] + D_ANG };
+
+    double erro1 = pso_gbest(x1, objetivo, opcoes, limiteInferior, limiteSuperior, restricao);
+	//ambiguidade de sinal...
+	limiteInferior[2] = -estimativaInicial[2] - D_ANG;
+	limiteSuperior[2] = -estimativaInicial[2] + D_ANG;
+	double erro2 = pso_gbest(x2, objetivo, opcoes, limiteInferior, limiteSuperior, restricao);
+	double erro;
+	if (erro1 < erro2) {
+		x = x1;
+		erro = erro1;
+	}		
+	else {
+		x = x2;
+		erro = erro2;
+	}
+		
     //while (!m->pertence(x(0),x(1)))
      //   double erro = pso_gbest(x, objetivo, opcoes, limiteInferior, limiteSuperior, restricao);
     std::cout << "\t erro = " << erro<<std::endl;

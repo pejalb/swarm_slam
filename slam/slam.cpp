@@ -7,6 +7,8 @@
 #include <Eigen/SparseCholesky>
 #include <boost/foreach.hpp>
 #include <functional>
+#include "pointcloud_kd_tree.h"
+using namespace nanoflann;
 #define ABS(x) ((x)>=0)?(x):(-x)
 #define TOL 1e-3
 #define PROXIMOS(a,b,tol) ABS(ABS(a)-ABS(b))<=tol
@@ -74,7 +76,8 @@ inline ponto slam::paraCoordenadasMapa(double x, double y)
 }
 inline ponto slam::paraCoordenadasMapa(ponto &p)
 {
-	return p / tamanhoCelula;
+	p /= tamanhoCelula;
+	return p;
 }
 inline void slam::paraCoordenadasMapaVector(std::vector<ponto> &scan)
 {
@@ -101,10 +104,8 @@ void slam::estimaVelocidade(int numPoses)
 pose slam::estimaProximaPose(void)
 {
     estimaVelocidade();
-    if (!std::isinf(vel.x) && !std::isinf(vel.y), !std::isinf(vel.angulo))
-        return poses.rbegin()[0] + vel;
-    else
-        return poses.rbegin()[0];
+	atual + vel;
+	return proximaPoseEstimada;
 }
 slam::slam()
 {
@@ -260,8 +261,12 @@ void salvaWrapper (slam *s,char nome[80])
 {
     s->mapa->salva(nome);
 }
-void slam::atualiza(std::vector<ponto> scan,bool usaOdometria, double odoX,double odoY,double odoAng,std::ofstream &linhas)
+void slam::atualiza(std::vector<ponto> scan,
+	bool usaOdometria,	double odoX, double odoY, double odoAng,
+	std::ofstream &linhas,
+	double vx , double vy , double w )
 {
+	const double toleranciaNorma = 10;//50 cm
     paraCoordenadasMapaVector(scan);
     pose p,estimada,anterior;
     if (guardaScans)
@@ -276,16 +281,57 @@ void slam::atualiza(std::vector<ponto> scan,bool usaOdometria, double odoX,doubl
             estimativa[0] = odoX/ESCALA;
             estimativa[1] = odoY/ESCALA;
             estimativa[2] = odoAng;
+			vel.x = vx/ESCALA;
+			vel.y = vy/ESCALA;
+			vel.angulo = w;
         }
         else {
-            estimativa[0] = estimada.x;
-            estimativa[1] = estimada.y;
+            estimativa[0] = estimada.x/ESCALA;
+            estimativa[1] = estimada.y/ESCALA;
             estimativa[2] = estimada.angulo;
         }
         try {
             p = psoScanMatch(scans.rbegin()[1], scan, estimativa,mapa);
             //p = psoScanMatch(scans.rbegin()[1], scan, estimativa, mapa);
-            poses.push_back(p);
+			/*if (usaOdometria) {
+				p.x = estimativa[0];
+				p.y = estimativa[1];
+				p.angulo = estimativa[2];
+			}*/            
+			atual = p;
+			double erroPrevisao = (atual - proximaPoseEstimada).norma();
+			if (erroPrevisao > toleranciaNorma)
+			{
+				//tenta estimar as outras poses mais proximas
+				//constroi conjunto de localidades
+				std::vector<ponto> localidades; localidades.reserve(poses.size());
+				BOOST_FOREACH(pose ps, poses) {
+					localidades.push_back(ponto(ps.x, ps.y));
+				}
+				//constroi arvore kd
+				PointCloud<double> cloud; cloud.pts = localidades;
+				std::vector<size_t> idx = constroiKDtree<double>(cloud, ponto(p.x,p.y), 1);
+				//tenta estimar melhor baseado na media das estimativas
+				pose pmedia;
+				int num = 0;
+				BOOST_FOREACH(size_t ind, idx) {
+					pmedia+= psoScanMatch(scans[ind], scan, estimativa, mapa);
+				}
+				pmedia.x /= (double)num;
+				pmedia.y /= (double)num;
+				pmedia.angulo /= (double)num;
+				if ((pmedia - proximaPoseEstimada).norma() < erroPrevisao) {
+					atual = pmedia;
+				}
+			}
+			if (usaOdometria) {
+				proximaPoseEstimada = atual + vel;
+			}
+			else {
+				proximaPoseEstimada = estimaProximaPose();
+			}
+			poses.push_back(atual);
+			std::cout << "\n Dx = " << std::abs(p.x - estimativa[0]) << ", Dy = " << p.y - estimativa[1] << ", Dy = " << p.angulo - estimativa[2]<<std::endl;
             //p = psoScanMatch(scan, scans.rbegin()[0], estimativa,
                 //poses, fRestricaoPoses);
         }
@@ -307,15 +353,15 @@ void slam::atualiza(std::vector<ponto> scan,bool usaOdometria, double odoX,doubl
         //p = (poses.rbegin())[0];
     }
     else
-        p = (poses.rbegin())[0];// p.x /= tamanhoCelula; p.y /= tamanhoCelula;
+        atual = (poses.rbegin())[0];// p.x /= tamanhoCelula; p.y /= tamanhoCelula;
     
     // int i;
     //std::vector<ponto>::iterator it = scan.begin();
-    transforma_vetor_pontos(scan, p);
+    transforma_vetor_pontos(scan, atual);
 	//transforma_vetor_pontos(scan, p + origem);
     scans.pop_back();
     scans.push_back(scan);
-	pose poseRobo = origem + p;//global
+	pose poseRobo = origem + atual;//global
 	BOOST_FOREACH(ponto pto, scan) {
 		//std::cout << "\nALCANCE = " << MAX_ALCANCE;
 		if (pto.norma() <= MAX_ALCANCE) {

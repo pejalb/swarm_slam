@@ -47,7 +47,7 @@
 //constantes inerentes ao problema
 
 #if TESTE_CSV_ == 1//caso seja um teste com arquivo csv de leituras 
-#define ESCALA (0.1)
+#define ESCALA (0.05)
 #define ESPACO_ANG A_180_GRAUS
 #define MEIO_ESPACO_ANG A_90_GRAUS
 #define LEITURAS_POR_SCAN (181)

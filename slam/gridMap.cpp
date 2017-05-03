@@ -161,7 +161,7 @@ inline bool gridMap::pertence(int x, int y)
 
 void gridMap::marcaLinha(int x1, int y1, int x2, int y2)
 {
-    if (maiorLinhaPertencente(x1, y1, x2, y2)) {
+    //if (maiorLinhaPertencente(x1, y1, x2, y2)) {
         int dx, dy, p, p2, xy2, x, y, xf, yf;
         dx = x2 - x1;
         dy = y2 - y1;
@@ -186,7 +186,7 @@ void gridMap::marcaLinha(int x1, int y1, int x2, int y2)
                 decrementa(x, y);//espaco livre
         }
         incrementa(x, y); incrementa(x, y);
-    }
+    //}
 }
 
 
