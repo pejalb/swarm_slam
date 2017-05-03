@@ -123,7 +123,7 @@ double pearsonR(std::vector<ponto> &scan1, std::vector<ponto> &scan2)
 	//a ordem carrega implicitamente a nocao de direcao...
 	std::vector<double> scan1Mod;
 	std::vector<double> scan2Mod;
-	int tam = std::min(scan1.size(), scan2.size());
+	int tam = std::min(scan1.size(), scan2.size())-1;
 	int i;
 
 	for (i = 0; i < tam; i++){
