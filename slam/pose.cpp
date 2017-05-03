@@ -88,7 +88,7 @@ ponto operator+(ponto lhs, const pose & rhs)
 	return lhs;
 }
 
-inline void transforma_vetor_pontos(std::vector<ponto>& scan, pose &p)
+void transforma_vetor_pontos(std::vector<ponto>& scan, pose & p)
 {
 	BOOST_FOREACH(ponto &pto, scan) {
 		pto = p + pto;

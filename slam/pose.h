@@ -23,6 +23,6 @@ class pose : public ponto {
 		friend ponto operator+(ponto lhs,const pose &rhs);
 };
 
-inline void transforma_vetor_pontos(std::vector<ponto>& scan, pose &p);
+void transforma_vetor_pontos(std::vector<ponto>& scan, pose &p);
 
 #endif

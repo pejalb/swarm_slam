@@ -18,12 +18,6 @@ inline double limitaAngulo(double x) {
     return x - M_PI;
 }
 
-inline void transforma_vetor_pontos(std::vector<ponto>& scan, pose &p)
-{
-    for (int i = 0; i < scan.size(); i++) {
-        scan[i] = p + scan[i];
-    }
-}
 
 inline double rand_uniforme(double min, double max)
 {
@@ -120,15 +114,16 @@ double media(std::vector<double> &scan)
 
 double pearsonR(std::vector<ponto> &scan1, std::vector<ponto> &scan2)
 {
+	int tam = std::min(scan1.size(), scan2.size());
 	//a ordem carrega implicitamente a nocao de direcao...
-	std::vector<double> scan1Mod;
-	std::vector<double> scan2Mod;
-	int tam = std::min(scan1.size(), scan2.size())-1;
+	std::vector<double> scan1Mod; scan1Mod.reserve(tam);
+	std::vector<double> scan2Mod; scan2Mod.reserve(tam);
+	tam--;
 	int i;
 
 	for (i = 0; i < tam; i++){
-		scan1Mod[i] = scan1[i].norma();
-		scan2Mod[i] = scan2[i].norma();
+		scan1Mod.push_back( scan1[i].norma());
+		scan2Mod.push_back(scan2[i].norma());
 	}
 
 	double m1 = media(scan1Mod);
@@ -163,8 +158,9 @@ double fobj(Eigen::VectorXd v,std::vector<ponto> & scanOrigem, std::vector<ponto
     }
     //std::cout << "\nerro = " << erro << std::endl;
 	
-	double r = pearsonR(scanDestino,novoScanOrigem);
-    return std::sqrt(erro/((double)numPontos*std::abs(r)));
+	//double r = pearsonR(scanDestino,novoScanOrigem);
+	//return std::sqrt(erro / ((double)numPontos*std::abs(r)));
+    return std::sqrt(erro/((double)numPontos));
 }
 
 double fobjMelhorada(Eigen::VectorXd v, std::vector<ponto> & scanOrigem, std::vector<ponto> & scanDestino, std::vector<std::vector<size_t> > &idx, gridMap *m)
@@ -173,12 +169,12 @@ double fobjMelhorada(Eigen::VectorXd v, std::vector<ponto> & scanOrigem, std::ve
     int numPontos = scanOrigem.size();
     //int maxLin = m->maxLinhas /10;
     //int maxCol = m->maxColunas /10;
-    transforma_vetor_pontos(scanOrigem, p);
+	std::vector<ponto> novoScanOrigem = vetor_pontos_transformado(scanOrigem, p);
     double erro =fobj(v,scanOrigem,scanDestino,idx);
     double diffMapa = 0.0;
     for (size_t i = 0; i < scanDestino.size(); i++){
         //std::cout << "\n mapa (" << std::round(scanOrigem[i].x) << "," << std::round(scanOrigem[i].y) << ")\n";
-        diffMapa -= m->leMapa(std::round(scanOrigem[i].x), std::round(scanOrigem[i].y));
+        diffMapa -= m->leMapa(std::round(novoScanOrigem[i].x), std::round(novoScanOrigem[i].y));
     }
     //std::cout << "\nerro = " << erro << std::endl;
     return std::sqrt((1.0+erro)*(1.0 + std::abs(diffMapa)) / ((double)numPontos));

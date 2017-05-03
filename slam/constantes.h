@@ -35,9 +35,9 @@
 #endif
 
 #ifdef SCAN_MATCH_
-#define DX 5.0
-#define DY 5.0
-#define D_ANG 0.25*M_PI
+#define DX 50.0
+#define DY 50.0
+#define D_ANG 0.5*M_PI
 #define ERRO_CELULA_MAPA_INICIAL 0.5
 #define ERRO_MAXIMO 100
 
