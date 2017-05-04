@@ -9,12 +9,12 @@ class ponto {//define um ponto em 2d, num sistema cartesiano
        ponto(double x,double y);
        ponto(const ponto &);
        ponto operator=(const ponto& rhs);
-       ponto operator+(const ponto& rhs);//válido?
+       ponto operator+(ponto rhs);//válido?
        ponto &operator+=(const ponto& rhs);
-       ponto operator-(const ponto& rhs);//talvez retornar um vetor, overloading?
+       ponto operator-(ponto rhs);//talvez retornar um vetor, overloading?
        ponto &operator-=(const ponto& rhs);
-       ponto operator/ (const double& rhs);
-       ponto &operator/=(const double& rhs);
+       ponto operator/ (double rhs);
+       ponto &operator/=(double rhs);
        bool operator== (ponto& rhs);
        bool operator!=(ponto& rhs);
        //norma L^2

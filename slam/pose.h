@@ -2,6 +2,7 @@
 #define POSE
 #include "ponto.h"
 #include <Eigen/Dense>
+#include <vector>
 
 class pose : public ponto {    
     public :
@@ -18,6 +19,10 @@ class pose : public ponto {
          pose& operator-=(const pose& rhs);//retorna a composicao da presente pose com uma pose relativa
         pose operator! (void);//retorna a "pose relativa" inversa e.g:!Dab=Dba
         //composicao de poses e pontos
-        ponto operator+(const ponto &rhs);
+        friend ponto operator+(const pose &lhs,ponto rhs);
+		friend ponto operator+(ponto lhs,const pose &rhs);
 };
+
+void transforma_vetor_pontos(std::vector<ponto>& scan, pose &p);
+
 #endif

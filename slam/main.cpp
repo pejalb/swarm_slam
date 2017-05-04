@@ -4,10 +4,12 @@
 #include "slam.h"
 #include "constantes.h"
 #include <cstdlib>
+#include <cmath>
 #include <vector>
 #include <iostream>
 #include <fstream>
 #include <Eigen/Sparse>
+#include <boost/tokenizer.hpp>
 #include <string>
 #include <sstream>
 #include <iterator>
@@ -55,15 +57,19 @@ void Tokenize(const std::string& str,
 
 std::vector < std::vector<double> > leScansCSV(char *nomeArq,const int tamLinha=361)
 {
-	std::vector < std::vector<double> > scans; scans.reserve(100);
+	std::vector < std::vector<double> > scans; scans.reserve(300);
 	std::vector<double> tmp;
-	std::ifstream dados; dados.open(nomeArq);
+	std::ifstream dados; dados.open(nomeArq,std::ios::in );
 	std::string buffer;
 	bool teste = dados.is_open();
 	int contador = 0;
 	if (dados.is_open()) {
 		while (std::getline(dados, buffer)){
+			boost::tokenizer<> tok(buffer);
 			Tokenize(buffer, tmp);
+			//for (boost::tokenizer<>::iterator beg = tok.begin(); beg != tok.end(); ++beg) {
+			//	std::cout << *beg << "\n";
+			//}
 			scans.push_back(tmp);
             tmp.clear();
 		}
@@ -89,30 +95,54 @@ void paraCoordenadasCartesianas(std::vector < std::vector<double> > polarScans, 
 	}
 }
 
+void paraCoordenadasCartesianas(std::vector < std::vector<double> > range, std::vector < std::vector<double> >bearing, std::vector <std::vector<ponto> > &pontos)
+{
+	//assert(range.size() == bearing.size());
+	std::vector< std::vector<ponto> >::iterator itDest = pontos.begin();
+	std::vector<ponto> buffer; buffer.reserve(LEITURAS_POR_SCAN);
+	//double incrementoAngular = espacoAngular / (double)LEITURAS_POR_SCAN;
+	int i;
+
+	for (int num = 0; num < range.size(); num++) {
+		for (i = 0; i < LEITURAS_POR_SCAN; i++) {
+			//buffer.push_back(ponto::polarParaCartesiano(it->at(i), ((double)i)*incrementoAngular - offsetAngular));
+			buffer.push_back(ponto(range[num][i] * std::cos(bearing[num][i]), range[num][i] * std::sin(bearing[num][i])));
+		}
+		pontos.push_back(buffer);
+		buffer.clear();
+	}
+}
+
 
 
 int main()
 {
     //std::cout << "\nEscala = " << ESCALA;
 	//slam s(1000, 1000, ESCALA); 
-    slam s(1000, 1000, ESCALA, true, true, 0.5, 0.9);
+    slam s(2000, 2000, ESCALA, true, true, 0.5, 0.9);
 	std::ofstream arqLinhas; arqLinhas.open("linhas", std::ios::out | std::ios::trunc);
 	//teste de funcionamento...
 #if TESTE_MOBILE_SIM_==1
     auto tmp = leScansCSV("dump04_04_2017 09_04_14.csv",181);
 #else
-	auto tmp = leScansCSV("mit-csail.csv");
+	//auto tmp = leScansCSV("mit-csail.csv");
+	auto r = leScansCSV("range01.log", LEITURAS_POR_SCAN);
+	auto bear = leScansCSV("bearing01.log",LEITURAS_POR_SCAN);
+	auto odo = leScansCSV("odom01.log",LEITURAS_POR_SCAN);
 #endif
 	if(TESTE_CSV_) {
-		std::vector <std::vector<ponto> > leituras; leituras.reserve(tmp.size());
-		paraCoordenadasCartesianas(tmp,leituras, ESPACO_ANG, MEIO_ESPACO_ANG);
+		std::vector <std::vector<ponto> > leituras; leituras.reserve(r.size());
+		paraCoordenadasCartesianas(r,bear,leituras);
 		std::ofstream arqLinhas; arqLinhas.open("linhas",std::ios::out | std::ios::trunc);
 		int i = 0;
-		for (i = 0; i < leituras.size(); i++) {
+		int tam = leituras.size();
+		tam = tam < odo.size() ? tam : odo.size();
+		tam = tam < bear.size() ? tam : bear.size();
+		for (i = 0; i < tam; i++) {
 			std::cout << "\nIteracao " << i;
-            s.atualiza(leituras.at(i),false,0.0,0.0,0.0,arqLinhas);
-            if((i % 100 ==0) && (i>0))
-                s.corrige();//debugging....a frequencia deve ser um pouco menor na pratica
+            s.atualiza(leituras.at(i),true,odo[i][0],odo[i][1],odo[i][2],arqLinhas);
+            //if((i % 100 ==0) && (i>0))
+            //    s.corrige();//debugging....a frequencia deve ser um pouco menor na pratica
 		}
 	}
 //	else {

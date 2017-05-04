@@ -182,6 +182,38 @@ std::vector<std::vector<size_t> > constroiKDtree(PointCloud<num_t> &cloud, std::
         return ret_indexes;
     }
 }
+
+template <typename num_t>
+std::vector<size_t> constroiKDtree(PointCloud<num_t> &cloud, ponto p, size_t num_results = 5)
+{
+	// construct a kd-tree index:
+	// typedef KDTreeSingleIndexAdaptor<
+	//     L2_Simple_Adaptor<num_t, PointCloud<num_t> >,
+	//     PointCloud<num_t>,
+	//     2 /* dim */
+	// > my_kd_tree_t;
+
+	my_kd_tree_t   index(2 /*dim*/, cloud, KDTreeSingleIndexAdaptorParams(10 /* max leaf */));
+	index.buildIndex();
+
+	// ----------------------------------------------------------------
+	// knnSearch():  Perform a search for the N closest points
+	// ----------------------------------------------------------------
+		//size_t num_results = 5;
+		//garante espaco
+	std::vector<size_t>   ret_index(num_results);
+	std::vector<num_t> out_dist_sqr(num_results);
+	num_t query_pt[2];
+	query_pt[0] = p.x;
+	query_pt[1] = p.y;
+	num_results = index.knnSearch(&query_pt[0], num_results, &ret_index[0], &out_dist_sqr[0]);
+
+	//num_results = index.knnSearch(&query_pt[0], num_results, &ret_index[0], &out_dist_sqr[0]);
+	// In case of less points in the tree than requested:
+	ret_index.resize(num_results);
+	//out_dist_sqr.resize(num_results);
+	return ret_index;
+}
 #endif
 
 /* int main()

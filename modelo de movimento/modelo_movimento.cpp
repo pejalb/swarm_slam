@@ -58,6 +58,6 @@ const Eigen::Vector3d modeloMovimento::retornaIncerteza(void)
 {
 	//Eigen::JacobiSVD<Eigen::Matrix3d> svd(covariancias);
 	//const Eigen::Vector3d autoval=svd.singularValues();
-	return Eigen::Vector3d((std::sqrt(covariancias(0,0))), 
+	return Eigen::Vector3d(std::abs(std::sqrt(covariancias(0,0))), 
 		std::abs(std::sqrt(covariancias(1, 1))),std::abs(std::sqrt(covariancias(2, 2))));
 }

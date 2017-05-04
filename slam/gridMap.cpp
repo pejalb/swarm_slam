@@ -1,6 +1,7 @@
 #include "gridMap.h"
 #include <cmath>
 #include <fstream>
+#include <boost/foreach.hpp>
 
 
 bool gridMap::maiorLinhaPertencente(int &x1, int &y1, int &x2, int &y2)
@@ -105,8 +106,8 @@ gridMap::gridMap(int linhas, int colunas, std::vector<ponto>&scan, double probPr
     incrementoFundamental = std::log(probOcc / (1 - probOcc));
     //preenche o mapa criado
     ponto origem(linhas >> 1, colunas >> 1);
-    for (std::vector<ponto>::iterator it = scan.begin(); it != scan.end(); it++) {
-        marcaLinha(origem.x, origem.y, it->x, it->y);
+    BOOST_FOREACH(ponto pto,scan){
+        marcaLinha(origem.x, origem.y, pto.x, pto.y);
     }
 }
 
@@ -160,7 +161,7 @@ inline bool gridMap::pertence(int x, int y)
 
 void gridMap::marcaLinha(int x1, int y1, int x2, int y2)
 {
-    if (maiorLinhaPertencente(x1, y1, x2, y2)) {
+    //if (maiorLinhaPertencente(x1, y1, x2, y2)) {
         int dx, dy, p, p2, xy2, x, y, xf, yf;
         dx = x2 - x1;
         dy = y2 - y1;
@@ -185,7 +186,7 @@ void gridMap::marcaLinha(int x1, int y1, int x2, int y2)
                 decrementa(x, y);//espaco livre
         }
         incrementa(x, y); incrementa(x, y);
-    }
+    //}
 }
 
 
