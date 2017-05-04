@@ -54,7 +54,7 @@
 //numero minimo de poses cujo armazenamento e garantido
 #define NUM_MINIMO_POSES (700)
 #define SCANS_DE_TESTE (0)
-#define MAX_ALCANCE 25.0/ESCALA
+#define MAX_ALCANCE 7.0/ESCALA
 #else //caso se trate de um ensaio rodando onboard no p3dx
 #define ESCALA 100.0
 #define ESPACO_ANG A_270_GRAUS

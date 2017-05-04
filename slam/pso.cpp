@@ -30,6 +30,8 @@ static double rand_gauss(double mu, double sigma)
 double pso_gbest(VectorXd &x, std::function<double(Eigen::VectorXd)> fobj, opcoesPSO &opcoes, double *limiteInferior,
     double *limiteSuperior, std::function<double(Eigen::VectorXd)> fRestricao)
 {
+	VectorXd melhorHistorico;
+	double menorCustoHistorico;
     //cria enxame
 	MatrixXd posicoes(opcoes.numParticulas, opcoes.numDimensoes); 
 	//posicoes *= 0.5;//limita os valores a [0,1]
@@ -76,6 +78,8 @@ double pso_gbest(VectorXd &x, std::function<double(Eigen::VectorXd)> fobj, opcoe
             gbestAnterior = gbestApt = apt;
             idxGbest = i;
             gbest = posicoes.row(i);
+			menorCustoHistorico = apt;
+			melhorHistorico = gbest;
         }
         melhoresAptidoes.push_back(apt);
         pbest.row(i) = posicoes.row(i);//a primeira posicao e necessariamente a melhor historica na primeira iteracao...
@@ -107,6 +111,10 @@ double pso_gbest(VectorXd &x, std::function<double(Eigen::VectorXd)> fobj, opcoe
                 idxGbest = j;
                 pbest.row(j) = posicoes.row(j);
             }
+			if ((iter == 0 || apt < menorCustoHistorico) && (std::isnormal(apt) || apt == 0.0)) {
+				menorCustoHistorico = apt;
+				melhorHistorico = posicoes.row(j);
+			}
         }
             //atualiza velocidades
             velocidades += opcoes.coefInercia*velocidades +
@@ -167,12 +175,12 @@ double pso_gbest(VectorXd &x, std::function<double(Eigen::VectorXd)> fobj, opcoe
 				estagnacao = maxIterEstagnado;//quebrou-se a estagnacao...reinicie a contagem
            // std::cout << "\niter" << iter << " gbest = " << apt ;//debugging
         }        
-    x = gbest;
+    x = melhorHistorico;
     //apt = gbestApt;
 //    delete[] melhoresAptidoes;
   //  delete[] faixasDeValores;
     //if (std::isnormal(apt))//cuidado com zero (seria ideal...)!!!
-        return gbestApt;
+        return menorCustoHistorico;
     //else
     //    return -1.0;//pela forma como foi definida...fobj (no problema) e nao negativa!
 }
