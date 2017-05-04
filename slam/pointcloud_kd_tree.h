@@ -12,19 +12,19 @@ using namespace std;
 using namespace nanoflann;
 
 // This is an example of a custom data set class
-typedef ponto Point;
+typedef ponto kdPoint;
 
 
 
 template <typename T>
 struct PointCloud
 {
-    //struct Point
+    //struct kdPoint
     //{
     //T  x,y,z;
     //};
 
-    std::vector<Point>  pts;
+    std::vector<kdPoint>  pts;
 
     // Must return the number of data points
     inline size_t kdtree_get_point_count() const { return pts.size(); }

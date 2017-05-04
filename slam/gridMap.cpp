@@ -1,218 +1,303 @@
-#include "gridMap.h"
+#include <cstdlib>
+#include <cstdio>
 #include <cmath>
 #include <fstream>
+#include "gridMap.h"
 
+#define TAM_MAX_NOME_ARQ 80
+#define TAM_MAX_NUM 10
 
-bool gridMap::maiorLinhaPertencente(int &x1, int &y1, int &x2, int &y2)
+//necessario no vc++
+#define _CRT_SECURE_NO_WARNINGS
+
+gridMap::gridMap():probOcupacao(0.9), probPriori(0.5), probLivre(0.1)
 {
-    //encontra o maior segmento pertencente ao espaco do mapa (se houver retorna true)
-    static int numRec = 1;
-    if ((x1 < 0 && x2 < 0) || (x1 >= maxLinhas && x2 >= maxLinhas) || (y1 < 0 && y2 < 0) || (y1 >= maxColunas && y2 >= maxColunas))
-        return false;//nao ha segmentos pertencentes    
-    else if (pertence(x1, y1) && pertence(x2, y2)) {
-        numRec = 1;
-        return true;
-    }
-    else if (!pertence(x1, y1) && !pertence(x2, y2)) {
-        numRec = 0;
-        return false;
-    }
-    else {
-        if (x1 < 0 && x2 >= 0 ) {
-            x1 = 0;
+	//ctr padrao
+	numLinhas = numColunas = 0;
+	incremento = 0.1*std::log(probOcupacao / probLivre);
+	//incremento = std::log(probLivre /  probOcupacao);
+	numFrames = 0;
+}
+
+gridMap::gridMap(int linhas, int colunas, bool usaLogOdds,
+	double probPrior , double probOcc , double probFree ) :probOcupacao(probOcc), probPriori(probPrior), probLivre(probFree)
+{
+	if (linhas >= 0 && colunas >= 0){
+		//grid = new double[linhas*colunas];
+        grid.reserve(linhas);
+        logOddsPrior = std::log(probPrior / (1 - probPrior));
+        std::vector<long double> tmp; tmp.reserve(colunas);
+        for (int j = 0; j < colunas; j++) {
+            tmp.push_back(logOddsPrior);
         }
-        if (x1 >= 0 && x2 < 0) {
-            x2 = 0;
+        for (int i = 0; i < linhas; i++){            
+            grid.push_back(tmp);
         }
-        if (x1 >= maxLinhas && x2 < maxLinhas) {
-            x1 = maxLinhas-1;
-        }
-        if (x2 >= maxLinhas && x1 < maxLinhas) {
-            x2 = maxLinhas-1;
-        }
-        if (y1 < 0 && y2 >= 0) {
-            y1 = 0;
-        }
-        if (y1 >= 0 && y2 < 0) {
-            y2 = 0;
-        }
-        if (y1 >= maxColunas && y2 < maxColunas) {
-            y1 = maxColunas-1;           
-        }
-        if (x2 >= maxColunas && x1 < maxColunas) {
-            y2 = maxColunas-1;            
-        }
-        if (numRec-- > 0)
-            maiorLinhaPertencente(x1, y1, x2, y2);
-    }
-    return false;//nao foi possivel...
+        
+		numLinhas = linhas;
+		numColunas = colunas;
+		logOdds = usaLogOdds;
+		if (usaLogOdds) {
+			incremento = std::log(probOcupacao / probLivre);
+			decremento = std::log(probLivre / probOcupacao);
+		}
+		numFrames = 0;
+	}
+	/*acrescente tratamento em caso de n ser invalido
+	ou de ser impossivel alocar espaco suficiente*/
 }
 
-gridMap::gridMap() :maxLinhas(0),maxColunas(0)
-{
-}
-/*
-void bresenham(int x1, int y1, int x2, int y2)
-{
-    int dx, dy, p, p2, xy2, x, y, xf;
-    dx = x2 - x1;
-    dy = y2 - y1;
-    p = 2 * dy - dx;
-    p2 = 2 * dy;
-    xy2 = 2 * (dy - dx);
-    if (x1>x2)
-    {
-        x = x2; y = y2; xf = x1;
-    }
-    else
-    {
-        x = x1; y = y1; xf = x2;
-    }
-    putpixel(x, y, 9);
-    while (x<xf) {
-        x++;
-        if (p<0)
-            p += p2;
-        else {
-            y++;
-            p += xy2;
-        }
-        putpixel(x, y, 9);
-    }
-}
-*/
-
-gridMap::gridMap(int linhas, int colunas, double probPrior, double probOcc ) : maxLinhas (linhas),maxColunas(colunas)
-{
-    //se nada foi definido...inicialize todos os valores com zero
-    mapa.resize(maxLinhas, maxColunas);
-    if (probPrior != 0.5)
-        mapa.setConstant(std::log(probPrior / (1 - probPrior)));
-    else
-        mapa.setZero();
-    incrementoFundamental = std::log(probOcc/(1-probOcc));
-    //decrementoFundamental = -incrementoFundamental;
-}
-
-gridMap::gridMap(int linhas, int colunas, std::vector<ponto>&scan, double probPrior , double probOcc ) : maxLinhas(linhas), maxColunas(colunas)
-{
-    //se nada foi definido...inicialize todos os valores com zero
-    mapa.resize(maxLinhas, maxColunas);
-    if (probPrior != 0.5)
-        mapa.setConstant(std::log(probPrior / (1 - probPrior)));
-    else
-        mapa.setZero();
-    incrementoFundamental = std::log(probOcc / (1 - probOcc));
-    //preenche o mapa criado
-    ponto origem(linhas >> 1, colunas >> 1);
-    for (std::vector<ponto>::iterator it = scan.begin(); it != scan.end(); it++) {
-        marcaLinha(origem.x, origem.y, it->x, it->y);
-    }
-}
-
-double & gridMap::operator()(int linha, int coluna)
-{
-    return mapa(linha, coluna);
-}
-
-double gridMap::operator-(const gridMap &rhs)
-{
-    return (this->mapa - rhs.mapa).norm();
-}
-
-double gridMap::operator-(std::vector<ponto>& scans)
-{
-    return ((*this) - gridMap(maxLinhas, maxColunas, scans));
-}
-
-void gridMap::limpa(void)
-{
-    mapa.setZero();
-}
-
-inline double gridMap::incrementa(int linha, int coluna)
-{
-    const double importancia = 1.61803;
-    if (pertence(linha, coluna)) {
-        mapa(linha, coluna) -= importancia*incrementoFundamental;
-        return mapa(linha, coluna);
-    }
-}
-
-inline double gridMap::decrementa(int linha, int coluna)
-{
-    if (pertence(linha, coluna)) {
-        mapa(linha, coluna) += incrementoFundamental;
-        return mapa(linha, coluna);
-    }
-}
-
-//marca celulas de um segmento de reta no mapa
-
-inline bool gridMap::pertence(int x, int y)
-{
-    //determina se o ponto (x,y) pertence ao espaco do mapa
-    if (0 <= x && x < maxLinhas && 0 <= y && y < maxColunas)
-        return true;
-    else
-        return false;
-}
-
-void gridMap::marcaLinha(int x1, int y1, int x2, int y2)
-{
-    if (maiorLinhaPertencente(x1, y1, x2, y2)) {
-        int dx, dy, p, p2, xy2, x, y, xf, yf;
-        dx = x2 - x1;
-        dy = y2 - y1;
-        p = 2 * dy - dx;
-        p2 = 2 * dy;
-        xy2 = 2 * (dy - dx);
-        if (x1 > x2) {
-            x = x2; y = y2; xf = x1; yf = y1;
-        }
-        else {
-            x = x1; y = y1; xf = x2; yf = y2;
-        }
-        decrementa(x, y); decrementa(x, y);//ponto inicial...vazio por definicao ...ja que e onde se encontra o robo...
-        while (x < xf && x<maxLinhas && y<maxColunas) {
-            x++;
-            if (p < 0)
-                p += p2;
-            else {
-                y++;
-                p += xy2;
-            }if (y!=yf)
-                decrementa(x, y);//espaco livre
-        }
-        incrementa(x, y); incrementa(x, y);
-    }
-}
-
-
-
-void gridMap::salva(char * nomeArq)
-{
-    std::ofstream arquivo;
-    arquivo.open(nomeArq,std::ios::out | std::ios::trunc);//apaga quaisquer outros arquivos com o mesmo nome!
-    if (arquivo.is_open()) {
-        arquivo << mapa;
-        arquivo.close();
-    }
-}
-
-double gridMap::leMapa(int linha, int coluna)
-{
-    if (pertence(linha, coluna))
-        return mapa(linha, coluna);
-    else //adicione tratamento de excecao!!!!!!!!!!
-        return 0.0;//nao contribui para o erro na fobj
-}
-
-double gridMap::alteraMapa(int linha, int coluna, double valor)
-{
-    return mapa(linha,coluna)=valor;
-}
 
 gridMap::~gridMap()
 {
+}
+
+long double gridMap::leMapa(int linha, int coluna)
+{
+	//retorna o valor presente na posicao linha,coluna
+    if (linha < numLinhas && coluna < numColunas
+        && linha >= 0 && coluna >= 0) {
+        return grid[linha][coluna];
+    }
+    else {
+        return 0.0;//MELHORE O TRATAMENTO DE POSSIVEIS ERROS DE ALOCACAO!!!
+    }
+}
+
+long double gridMap::alteraMapa(int linha, int coluna, long double novoValor)
+{
+	if (linha < numLinhas && coluna < numColunas
+		&& linha >= 0 && coluna >= 0){
+		//if (grid[coluna*numLinhas+linha])
+                //    printf("\ngrid[...] aponta para null");
+                //if(grid==NULL)
+                //    printf("\ngrid e null");
+		//printf("\ngrid[%d][%d]=%lf",linha,coluna,grid[coluna*numLinhas+linha]);
+                grid[linha][coluna] = novoValor;
+		//printf("\ngrid[%d][%d]=%lf",linha,coluna,grid[coluna*numLinhas+linha]);
+		return grid[linha][coluna];//retorna o valor posto na posicao
+	}
+	else {
+		return 0.0;//MELHORE O TRATAMENTO DE POSSIVEIS ERROS DE ALOCACAO!!!
+	}
+}
+
+long double gridMap::incrementa(int linha, int coluna)
+{
+    if (linha < numLinhas && coluna < numColunas
+        && linha >= 0 && coluna >= 0) {
+        grid[linha][coluna] = grid[linha][coluna] + 2*incremento - logOddsPrior;
+    }
+    else {
+        return 0.0;
+    }
+}
+
+long double gridMap::decrementa(int linha, int coluna)
+{
+    if (linha < numLinhas && coluna < numColunas
+        && linha >= 0 && coluna >= 0) {
+        grid[linha][coluna] = grid[linha][coluna] + 0.5*decremento - logOddsPrior;
+    }
+    else {
+        return 0.0;
+    }
+}
+
+int gridMap::tamanhoHorizontal(void)
+{
+    return numLinhas;
+}
+
+int gridMap::tamanhoVertical(void)
+{
+    return numColunas;
+}
+
+bool gridMap::operator==(gridMap &outroMapa)
+{
+	if (numLinhas != outroMapa.numLinhas || numColunas != outroMapa.numColunas){
+		return false;
+	}
+	else{
+		for (int i = 0; i < numLinhas; i++){
+			for (int j = 0; j < numColunas; j++){
+				if (leMapa(i, j) != outroMapa.leMapa(i, j))
+					return false;
+			}
+		}
+		return true;
+	}	
+}
+
+bool gridMap::operator!=(gridMap &outroMapa)
+{
+	if (numLinhas != outroMapa.numLinhas || numColunas != outroMapa.numColunas){
+		return true;
+	}
+	else{
+		for (int i = 0; i < numLinhas; i++){
+			for (int j = 0; j < numColunas; j++){
+				if (leMapa(i, j) != outroMapa.leMapa(i, j))
+					return true;
+			}
+		}
+		return false;
+	}
+}
+
+bool gridMap::gravaMapa(char * nomeArq)
+{
+	std::ofstream myfile;
+	if (nomeArq != NULL){
+		myfile.open(nomeArq);
+        long double max = 0.0;
+		if (myfile.is_open()) {
+			for (int i = 0; i < this->tamanhoVertical(); i++) {
+				for (int j = 0; j < this->tamanhoHorizontal(); j++) {
+                    long double val = leMapa(i, j);
+                    if (val > max)
+                        max = val;
+					myfile << val << ",";
+				}
+				myfile << std::endl;
+			}
+            //max += 1.0;
+			myfile.close();
+            for (int i = 0; i < this->tamanhoVertical(); i++) {
+                for (int j = 0; j < this->tamanhoHorizontal(); j++) {
+                    grid[i][j] = grid[i][j] / max;
+                }
+            }
+			return true;
+		}
+		else
+			return false;
+	}
+	else 
+		return false;		
+}
+
+bool gridMap::gravaMapaSeq(char * nomeArq)
+{
+	std::ofstream myfile;
+	if (nomeArq != NULL) {
+		char nomeArqFrame[TAM_MAX_NOME_ARQ];
+		char strNumFrames[TAM_MAX_NUM];
+		strcpy(nomeArqFrame, nomeArq);
+		std::sprintf(strNumFrames, "%d", numFrames++);
+		strcat(nomeArqFrame, strNumFrames);
+		myfile.open(nomeArqFrame);
+		int j = 0;
+		if (myfile.is_open()) {
+			for (int i = 0; i < this->tamanhoVertical(); i++) {
+				for (j = 0; j < this->tamanhoHorizontal(); j++) {
+					myfile << this->leMapa(i, j) << ",";
+				}
+				myfile << std::endl;
+			}
+			myfile.close();
+			return true;
+		}
+		else
+			return false;
+	}
+	else
+		return false;
+}
+
+//metodo de breesenham para desenhar linhas
+
+void gridMap::marcaLinha(int xInicial,int yInicial,int xFinal, int yFinal,bool decrementa)
+{
+	/*Utiliza o algoritmo de Bresenham para marcar a regiao entre o robo e o primeiro obstaculo. 
+	O argumento decrementa==true faz a probabilidade dos itens considerados obstáculos no mapa o serem de fato crescer.
+	Embora o modo padrao decremente o espaço vazio e incremente a probabilidade das regioes consideradas intransponíveis,
+	é possível inverter esse comportamento fazendo decrementa==false.
+	*/	
+	int dx, dy, incr1, incr2, d, x, y, xend, yend, xdirflag, ydirflag;
+    int cnt = 0;
+
+    dx = abs(xFinal - xInicial); dy = abs(yFinal - yInicial);
+
+    if (dy <= dx) {
+        d = 2 * dy - dx; incr1 = 2 * dy; incr2 = 2 * (dy - dx);
+        if (xInicial > xFinal) {
+            x = xFinal; y = yFinal;
+            ydirflag = (-1);
+            xend = xInicial;
+        }
+        else {
+            x = xInicial; y = yInicial;
+            ydirflag = 1;
+            xend = xFinal;
+        }
+        this->decrementa(x, y);
+        if (((yFinal - yInicial) * ydirflag) > 0) {
+            while (x < xend) {
+                x++;
+                if (d <0) {
+                    d += incr1;
+                }
+                else {
+                    y++; d += incr2;
+                }
+                this->decrementa(x, y);
+            }
+        }
+        else {
+            while (x < xend) {
+                x++;
+                if (d <0) {
+                    d += incr1;
+                }
+                else {
+                    y--; d += incr2;
+                }
+                this->decrementa(x, y);
+            }
+        }
+    }
+    else {
+        d = 2 * dx - dy;
+        incr1 = 2 * dx; incr2 = 2 * (dx - dy);
+        if (yInicial > yFinal) {
+            y = yFinal; x = xFinal;
+            yend = yInicial;
+            xdirflag = (-1);
+        }
+        else {
+            y = yInicial; x = xInicial;
+            yend = yFinal;
+            xdirflag = 1;
+        }
+        this->decrementa(x, y);
+        if (((xFinal - xInicial) * xdirflag) > 0) {
+            while (y < yend) {
+                y++;
+                if (d <0) {
+                    d += incr1;
+                }
+                else {
+                    x++; d += incr2;
+                }
+                this->decrementa(x, y);
+            }
+        }
+        else {
+            while (y < yend) {
+                y++;
+                if (d <0) {
+                    d += incr1;
+                }
+                else {
+                    x--; d += incr2;
+                }
+                this->decrementa(x, y);
+            }
+        }
+    }
+    this->incrementa(xFinal, yFinal);
+    this->incrementa(xFinal, yFinal);
+    this->incrementa(xFinal, yFinal);
 }

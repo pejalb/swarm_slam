@@ -1,6 +1,7 @@
 #include "ponto.h"
 #include <cstdio>
 #include <cmath>
+
 ponto::ponto()
 {
     //construtor padrao
@@ -87,17 +88,12 @@ double ponto::norma(int p)
     return std::pow(std::pow(x, p) + std::pow(y, p), 1.0 / ((double)p));//comparar performance..com
 }
 
-double ponto::quadradoNorma(void)
-{
-    return x*x + y*y;
-}
-
 Eigen::Vector2d ponto::paraVetor(void)
 {
     return Eigen::Vector2d(x,y);
 }
 
-ponto ponto::polarParaCartesiano(double raio, double angulo)
+ponto ponto::polarParaCartesiano(double r, double angulo)
 {
-	return ponto(raio*std::cos(angulo),raio*std::sin(angulo));
+    return ponto(r*std::cos(angulo),r*std::sin(angulo));
 }

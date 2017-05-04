@@ -38,7 +38,7 @@
 #define DX 10.0
 #define DY 10.0
 #define D_ANG 0.5*M_PI
-#define ERRO_CELULA_MAPA_INICIAL 0.5
+#define ERRO_CELULA_MAPA_INICIAL 0.1
 #define ERRO_MAXIMO 100
 
 #endif
@@ -47,14 +47,14 @@
 //constantes inerentes ao problema
 
 #if TESTE_CSV_ == 1//caso seja um teste com arquivo csv de leituras 
-#define ESCALA (0.15)
+#define ESCALA (0.1)
 #define ESPACO_ANG A_180_GRAUS
 #define MEIO_ESPACO_ANG A_90_GRAUS
 #define LEITURAS_POR_SCAN (361)
 //numero minimo de poses cujo armazenamento e garantido
 #define NUM_MINIMO_POSES (700)
 #define SCANS_DE_TESTE (0)
-#define MAX_ALCANCE 25.0/ESCALA
+#define MAX_ALCANCE 15.0/ESCALA
 #else //caso se trate de um ensaio rodando onboard no p3dx
 #define ESCALA 100.0
 #define ESPACO_ANG A_270_GRAUS

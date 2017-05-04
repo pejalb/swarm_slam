@@ -11,6 +11,7 @@ class modeloMovimentoBase {
 		tipoVetor poseRobo;//pose
 		tipoMatriz covariancias;//matriz de covariancias da pose
 	public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 		virtual tipoVetor posicao() = 0;
 		virtual tipoVetor atualizaPosicao(tipoVetor2 velocidade) = 0;
 };

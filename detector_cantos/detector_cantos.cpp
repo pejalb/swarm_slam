@@ -1,7 +1,9 @@
 #include "detector_cantos.h"
+#include <iostream>
 #define ABS(x) x>=0?(x):(-x)
 #define IGUAL(x,y,tol) ABS(x-y)<=(tol)?true:false
 #define DIFERENTE(x,y,tol) !IGUAL(x,y,tol)
+#define MAX_REC (5)
 
 inline bool horizontal(ponto pInicial, ponto pFinal, double tolerancia = 1e-3)
 {
@@ -29,9 +31,15 @@ bool detectaCanto(const std::vector<ponto> &scan, int inicio, int fim, int &idx,
 {
     //calcula o ponto medio
     int meio = (inicio + fim) / 2;
-    if (inicio == fim || vertical(scan[inicio], scan[fim], tolerancia) || horizontal(scan[inicio], scan[fim], tolerancia)) {
+    //std::cout << "\n inicio = " << inicio << ", fim = " << fim << "\n";
+    static int rec = 0;
+    if (rec == MAX_REC)
+        return false;
+    if ( inicio==fim || vertical(scan[inicio], scan[fim], tolerancia) || horizontal(scan[inicio], scan[fim], tolerancia)) {
         return false;
     }
+    if (IGUAL(inicio, fim, 1.0))
+        rec++;
     else {
         if (horizontal(scan[inicio], scan[meio], tolerancia) && vertical(scan[meio], scan[fim], tolerancia)) {
             idx = meio;

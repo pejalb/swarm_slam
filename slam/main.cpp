@@ -3,6 +3,7 @@
 #define TESTE_MOBILE_SIM_ 0
 #include "slam.h"
 #include "constantes.h"
+
 #include <cstdlib>
 #include <vector>
 #include <iostream>
@@ -11,6 +12,7 @@
 #include <string>
 #include <sstream>
 #include <iterator>
+#include <cmath>
 #include <algorithm>
 
 
@@ -111,8 +113,8 @@ int main()
 		for (i = 0; i < leituras.size(); i++) {
 			std::cout << "\nIteracao " << i;
             s.atualiza(leituras.at(i),false,0.0,0.0,0.0,arqLinhas);
-            if((i % 100 ==0) && (i>0))
-                s.corrige();//debugging....a frequencia deve ser um pouco menor na pratica
+            //if((i % 100 ==0) && (i>0))
+            //    s.corrige();//debugging....a frequencia deve ser um pouco menor na pratica
 		}
 	}
 //	else {

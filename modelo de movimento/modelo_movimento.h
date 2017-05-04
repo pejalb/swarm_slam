@@ -13,6 +13,7 @@ class modeloMovimento: public modeloMovimentoBase<Eigen::Vector3d, Eigen::Vector
 		Eigen::Matrix3d padraoCov;
 		double dt;//passo temporal;
 	public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 		modeloMovimento();
 		modeloMovimento(Eigen::Vector3d poseInicial);
 		Eigen::Vector3d posicao();

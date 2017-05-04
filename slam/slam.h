@@ -2,7 +2,8 @@
 #define SLAM_
 #include "gridMap.h"
 #include "scanMatch.h"
-
+#include "detector_cantos.h"
+#include "pointcloud_kd_tree.h"
 class slam {
     private:
         //define um vetor de poses vistas, permite descrever a trajetoria
@@ -10,6 +11,7 @@ class slam {
         std::vector<std::vector<ponto> > scans;
         //mapa sendo construido
         gridMap *mapa;
+        pose atual;
         //se guarda scans==true todos os scans serao armazenados, caso contrario, apenas dois serao armazenados, o atual e o predecessor imediato
         bool guardaScans;
         //escala usada
@@ -17,7 +19,7 @@ class slam {
 		//define restricoes lineares entre as poses
 		inline ponto paraCoordenadasMapa(double x, double y);
 		inline ponto paraCoordenadasMapa(ponto &);
-		inline void paraCoordenadasMapaVector(std::vector<ponto> &);
+        inline void slam::paraCoordenadasMapaVector(std::vector<ponto> &scan);
         pose origem;
         //funcoes de uso interno para a reducao do espaco de buscas
         void estimaVelocidade(int numPoses=5);
