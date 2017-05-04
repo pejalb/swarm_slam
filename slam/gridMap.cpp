@@ -51,6 +51,7 @@ bool gridMap::maiorLinhaPertencente(int &x1, int &y1, int &x2, int &y2)
 
 gridMap::gridMap() :maxLinhas(0),maxColunas(0)
 {
+
 }
 /*
 void bresenham(int x1, int y1, int x2, int y2)
@@ -87,11 +88,10 @@ gridMap::gridMap(int linhas, int colunas, double probPrior, double probOcc ) : m
 {
     //se nada foi definido...inicialize todos os valores com zero
     mapa.resize(maxLinhas, maxColunas);
-    if (probPrior != 0.5)
-        mapa.setConstant(std::log(probPrior / (1 - probPrior)));
-    else
-        mapa.setZero();
-    incrementoFundamental = std::log(probOcc/(1-probOcc));
+	mapa.setConstant(M);
+    //incrementoFundamental = std::log(probOcc/(1-probOcc));
+	origem.x = linhas >> 1;
+	origem.y = colunas >> 1;
     //decrementoFundamental = -incrementoFundamental;
 }
 
@@ -99,13 +99,10 @@ gridMap::gridMap(int linhas, int colunas, std::vector<ponto>&scan, double probPr
 {
     //se nada foi definido...inicialize todos os valores com zero
     mapa.resize(maxLinhas, maxColunas);
-    if (probPrior != 0.5)
-        mapa.setConstant(std::log(probPrior / (1 - probPrior)));
-    else
-        mapa.setZero();
-    incrementoFundamental = std::log(probOcc / (1 - probOcc));
+	mapa.setConstant(M);
     //preenche o mapa criado
-    ponto origem(linhas >> 1, colunas >> 1);
+	origem.x = linhas >> 1;
+	origem.y = colunas >> 1;
     BOOST_FOREACH(ponto pto,scan){
         marcaLinha(origem.x, origem.y, pto.x, pto.y);
     }
@@ -113,7 +110,7 @@ gridMap::gridMap(int linhas, int colunas, std::vector<ponto>&scan, double probPr
 
 double & gridMap::operator()(int linha, int coluna)
 {
-    return mapa(linha, coluna);
+    return mapa(origem.x+linha,origem.y+coluna);
 }
 
 double gridMap::operator-(const gridMap &rhs)
@@ -128,24 +125,66 @@ double gridMap::operator-(std::vector<ponto>& scans)
 
 void gridMap::limpa(void)
 {
-    mapa.setZero();
+	mapa.setConstant(M);
 }
 
 inline double gridMap::incrementa(int linha, int coluna)
 {
-    const double importancia = 1.61803;
+	linha += origem.x;
+	coluna += origem.y;
     if (pertence(linha, coluna)) {
-        mapa(linha, coluna) -= importancia*incrementoFundamental;
+		if (mapa(linha, coluna) == VVL) {
+			mapa(linha, coluna) = VL;
+		}
+		else if (mapa(linha, coluna) == VL) {
+			mapa(linha, coluna) = L;
+		}
+		else if (mapa(linha, coluna) == L) {
+			mapa(linha, coluna) = M;
+		}
+		else if (mapa(linha, coluna) == M) {
+			mapa(linha, coluna) = H;
+		}
+		else if (mapa(linha, coluna) == H) {
+			mapa(linha, coluna) = VH;
+		}
+		else if(mapa(linha, coluna) == VH) {
+			mapa(linha, coluna) = VVH;
+		}
+		else
+			mapa(linha, coluna) = VVH;
         return mapa(linha, coluna);
     }
 }
 
 inline double gridMap::decrementa(int linha, int coluna)
 {
-    if (pertence(linha, coluna)) {
-        mapa(linha, coluna) += incrementoFundamental;
-        return mapa(linha, coluna);
-    }
+	linha += origem.x;
+	coluna += origem.y;
+	if (pertence(linha, coluna)) {
+		if (mapa(linha, coluna) == VVH) {
+			mapa(linha, coluna) =VH;
+		}
+		else if (mapa(linha, coluna) == VH) {
+			mapa(linha, coluna) = H;
+		}
+		else if (mapa(linha, coluna) == H) {
+			mapa(linha, coluna) = M;
+		}
+		else if (mapa(linha, coluna) == M) {
+			mapa(linha, coluna) = L;
+		}
+		else if (mapa(linha, coluna) == L) {
+			mapa(linha, coluna) = VL;
+		}
+		else if (mapa(linha, coluna) == VL) {
+			mapa(linha, coluna) = VVL;
+		}
+		else {//(mapa(linha, coluna) == VVL) 
+			mapa(linha, coluna) = VVL;
+		}
+		return mapa(linha, coluna);
+	}
 }
 
 //marca celulas de um segmento de reta no mapa
@@ -203,6 +242,8 @@ void gridMap::salva(char * nomeArq)
 
 double gridMap::leMapa(int linha, int coluna)
 {
+	linha += origem.x;
+	coluna += origem.y;
     if (pertence(linha, coluna))
         return mapa(linha, coluna);
     else //adicione tratamento de excecao!!!!!!!!!!
@@ -211,7 +252,7 @@ double gridMap::leMapa(int linha, int coluna)
 
 double gridMap::alteraMapa(int linha, int coluna, double valor)
 {
-    return mapa(linha,coluna)=valor;
+    return mapa(linha+origem.x,coluna+origem.y)=valor;
 }
 
 gridMap::~gridMap()

@@ -8,6 +8,7 @@
 #include "pointcloud_kd_tree.h"
 #include <boost/foreach.hpp>
 #include <iostream>//debugging
+#include "lineScanMatcher.h"
 using namespace nanoflann;
 
 
@@ -163,7 +164,7 @@ double fobj(Eigen::VectorXd v,std::vector<ponto> & scanOrigem, std::vector<ponto
     return std::sqrt(erro/((double)numPontos));
 }
 
-double fobjMelhorada(Eigen::VectorXd v, std::vector<ponto> & scanOrigem, std::vector<ponto> & scanDestino, std::vector<std::vector<size_t> > &idx, gridMap *m)
+double fobjMelhorada(Eigen::VectorXd v, std::vector<ponto>  scanOrigem, std::vector<ponto>  scanDestino, std::vector<std::vector<size_t> > &idx, gridMap *m)
 {
     pose p(v);
     int numPontos = scanOrigem.size();
@@ -174,7 +175,7 @@ double fobjMelhorada(Eigen::VectorXd v, std::vector<ponto> & scanOrigem, std::ve
     double diffMapa = 0.0;
     for (size_t i = 0; i < scanDestino.size(); i++){
         //std::cout << "\n mapa (" << std::round(scanOrigem[i].x) << "," << std::round(scanOrigem[i].y) << ")\n";
-        diffMapa -= m->leMapa(std::round(novoScanOrigem[i].x), std::round(novoScanOrigem[i].y));
+        diffMapa += 1-m->leMapa(std::round(novoScanOrigem[i].x), std::round(novoScanOrigem[i].y));
     }
     //std::cout << "\nerro = " << erro << std::endl;
     return std::sqrt((1.0+erro)*(1.0 + std::abs(diffMapa)) / ((double)numPontos));
@@ -185,7 +186,7 @@ inline double fRestricaoPadrao(Eigen::VectorXd v)
     return 0.0;// v.squaredNorm();//se a restricao nao-linear nao foi fornecida...usa um "placeholder"
 }
 
-pose psoScanMatch(std::vector<ponto> & scanOrigem, std::vector<ponto> & scanDestino,double estimativaInicial[3],gridMap *m) throw(std::domain_error)
+pose psoScanMatch(std::vector<ponto>  scanOrigem, std::vector<ponto>  scanDestino,double estimativaInicial[3],gridMap *m) throw(std::domain_error)
 {
     using namespace std::placeholders;
     //assert(scanOrigem.size() == scanDestino.size());
@@ -215,6 +216,14 @@ pose psoScanMatch(std::vector<ponto> & scanOrigem, std::vector<ponto> & scanDest
     opcoes.numParticulas = 100;
     opcoes.velMax = 0.05;
     opcoes.tolerancia = 0.1;
+	//alinhamento inicial 
+	//etapa 1
+	double coeffAng, coeffLin;
+	double alfa = ajustaLinha(scanOrigem, coeffAng, coeffLin);
+	double beta = ajustaLinha(scanDestino, coeffAng, coeffLin);
+	double gama = beta - alfa;
+	transforma_vetor_pontos(scanOrigem, pose(0, 0, gama));
+	std::cout << "\n angulo medio entre scans = " << gama;
 	//se desejado pode criar uma estimativa
 	TransformType RT = icpSVD(converte_ponto_vector(scanOrigem), converte_ponto_vector(scanDestino));
 	transformTypeToDouble(RT, estimativaSVD);
@@ -244,18 +253,19 @@ pose psoScanMatch(std::vector<ponto> & scanOrigem, std::vector<ponto> & scanDest
     //    std::bind(fobj,_1,scanOrigem, scanDestino);//wrapper para a fobj, requer apenas a transformacao
 	PointCloud<double> cloud; cloud.pts = scanDestino;
 	std::vector<std::vector<size_t> > idx = constroiKDtree<double>(cloud, scanOrigem, 1);
+	double erroInicial = fobjMelhorada(Eigen::VectorXd::Zero(3, 1), scanOrigem, scanDestino, idx, m);
     std::function<double(Eigen::VectorXd)> objetivo =
             std::bind(fobjMelhorada,_1,scanOrigem, scanDestino,idx,m);//wrapper para a fobj, requer apenas a transformacao
     std::function<double(Eigen::VectorXd)> restricao = fRestricaoPadrao;
 	
 	
-	double limiteInferior[3] = { std::min(estimativaInicial[1] + estimativaSVD[0] - DX,0.0),std::min(estimativaInicial[1] + estimativaSVD[1] - DY,0.0),estimativaInicial[2] - D_ANG };
-	double limiteSuperior[3] = { std::min(estimativaInicial[1] + estimativaSVD[0] + DY,(double)m->maxLinhas) ,std::min(estimativaInicial[1] + estimativaSVD[1] + DY,(double)m->maxColunas),estimativaInicial[2] + D_ANG };
+	double limiteInferior[3] = { std::min(estimativaSVD[0] - DX,0.0),std::min(estimativaSVD[1] - DY,0.0),- D_ANG };
+	double limiteSuperior[3] = { std::min(estimativaSVD[0] + DY,(double)m->maxLinhas) ,std::min(estimativaSVD[1] + DY,(double)m->maxColunas),+ D_ANG };
 
     double erro1 = pso_gbest(x1, objetivo, opcoes, limiteInferior, limiteSuperior, restricao);
 	//ambiguidade de sinal...
-	limiteInferior[2] = -estimativaInicial[2] - D_ANG;
-	limiteSuperior[2] = -estimativaInicial[2] + D_ANG;
+	limiteInferior[2] = -  D_ANG;
+	limiteSuperior[2] = + D_ANG;
 	double erro2 = pso_gbest(x2, objetivo, opcoes, limiteInferior, limiteSuperior, restricao);
 	double erro;
 	if (erro1 < erro2) {
@@ -271,11 +281,14 @@ pose psoScanMatch(std::vector<ponto> & scanOrigem, std::vector<ponto> & scanDest
      //   double erro = pso_gbest(x, objetivo, opcoes, limiteInferior, limiteSuperior, restricao);
     std::cout << "\t erro = " << erro<<std::endl;
     if (erro < 0)
-        throw (std::domain_error("\nO processo de otimizacao obteve um valor invalido!"));    
-    return pose(x(0), x(1),limitaAngulo(x(2)));
+        throw (std::domain_error("\nO processo de otimizacao obteve um valor invalido!")); 
+	if (erro < erroInicial)
+		return pose(x(0), x(1), limitaAngulo(x(2) + gama));
+	else
+		return pose(0, 0, gama);
 }
 
-pose psoScanMatch(std::vector<ponto>& scanOrigem, std::vector<ponto>& scanDestino, double estimativaInicial[3], gridMap *m,
+pose psoScanMatch(std::vector<ponto> scanOrigem, std::vector<ponto> scanDestino, double estimativaInicial[3], gridMap *m,
     std::vector<pose>& outrasPoses, double(*fRestricao)(Eigen::VectorXd, std::vector<pose>&)) throw(std::domain_error)
 {
     using namespace std::placeholders;

@@ -3,6 +3,9 @@
 #include <Eigen/Dense>
 #include <vector>
 #include "ponto.h"
+#include "constantesOcupacao.h"
+
+
 
 class gridMap {
     private:
@@ -11,8 +14,10 @@ class gridMap {
         maxLinhas = max valor ao longo das abcissas ("x")
         maxColunas = max valor ao longo das ordenadas("y")
         */
+		ponto origem;
         double incrementoFundamental;//, decrementoFundamental;
         bool maiorLinhaPertencente(int &x1, int &y1, int &x2, int &y2);
+		
         //EXPERIMENTAL!!
         //void aumentaMapa(void);        
     public:

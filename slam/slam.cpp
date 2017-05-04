@@ -330,7 +330,7 @@ void slam::atualiza(std::vector<ponto> scan,
 				proximaPoseEstimada = estimaProximaPose();
 			}
 			poses.push_back(atual);
-			std::cout << "\n Dx = " << std::abs(p.x - estimativa[0]) << ", Dy = " << p.y - estimativa[1] << ", Dy = " << p.angulo - estimativa[2]<<std::endl;
+			std::cout << "\n Dx = " << std::abs(p.x - estimativa[0]) << ", Dy = " << p.y - estimativa[1] << ", Dangulo = " << p.angulo - estimativa[2]<<std::endl;
             //p = psoScanMatch(scan, scans.rbegin()[0], estimativa,
                 //poses, fRestricaoPoses);
         }
@@ -356,8 +356,7 @@ void slam::atualiza(std::vector<ponto> scan,
     
     // int i;
     //std::vector<ponto>::iterator it = scan.begin();
-	pose poseRobo = origem + atual;//global
-    transforma_vetor_pontos(scan, poseRobo);
+    transforma_vetor_pontos(scan, atual);
 	//transforma_vetor_pontos(scan, p + origem);
     scans.pop_back();
     scans.push_back(scan);
@@ -371,9 +370,11 @@ void slam::atualiza(std::vector<ponto> scan,
 			}
 			mapa->marcaLinha(origem.x+p.x,origem.y+ p.y,origem.x+ it->x,origem.y+ it->y);
 			linhas << p.x << "," << p.y << "," << it->x << "," << it->y << std::endl;*/
-			ponto tmp = origem + pto;
-			mapa->marcaLinha(poseRobo.x, poseRobo.y, tmp.x, tmp.y);
-			linhas << poseRobo.x << "," << poseRobo.y << "," << tmp.x << "," << tmp.y << std::endl;
+			ponto tmp = pto;
+			//mapa->marcaLinha(poseRobo.x, poseRobo.y, tmp.x, tmp.y);
+			//experiencia ....tente apenas marcar os pontos preenchidos
+			mapa->incrementa(std::round(tmp.x), std::round(tmp.y));
+			linhas << atual.x << "," << atual.y << "," << tmp.x << "," << tmp.y << std::endl;
 		}
 	}
     static int numScans = 0;   
@@ -384,7 +385,7 @@ void slam::atualiza(std::vector<ponto> scan,
 	} 
 	numScans++;
     std::ofstream arqPoses; arqPoses.open("poses", std::ios::out | std::ios::app);
-    arqPoses << poseRobo.x << "," << poseRobo.y << "," << poseRobo.angulo << std::endl;
+    arqPoses << atual.x << "," << atual.y << "," << atual.angulo << std::endl;
     //std::cout << poses.back().x << "," << poses.back().y << "," << poses.back().angulo << std::endl;
     arqPoses.close();
     //scans x (sistema local)

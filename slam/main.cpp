@@ -140,7 +140,10 @@ int main()
 		tam = tam < bear.size() ? tam : bear.size();
 		for (i = 0; i < tam; i++) {
 			std::cout << "\nIteracao " << i;
-            s.atualiza(leituras.at(i),true,odo[i][0],odo[i][1],odo[i][2],arqLinhas);
+            s.atualiza(leituras.at(i),true,odo[i][0],odo[i][1],odo[i][2],arqLinhas,odo[i][3],odo[i][4],odo[i][5]);
+			//gridMap m(1000, 1000, leituras.at(i), 0.5, 0.9);
+			//m.salva("Teste001");
+			//system("pause");
             //if((i % 100 ==0) && (i>0))
             //    s.corrige();//debugging....a frequencia deve ser um pouco menor na pratica
 		}
